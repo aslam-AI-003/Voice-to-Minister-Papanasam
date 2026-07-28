@@ -2,9 +2,11 @@
   "name": "mla-admin-thanjavur",
   "version": 2,
   "builds": [
+    { "src": "api/staff-auth.js", "use": "@vercel/node" },
     { "src": "**/*", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/staff-auth", "dest": "/api/staff-auth.js" },
     { "src": "/(.*)", "dest": "/$1" }
   ],
   "headers": [

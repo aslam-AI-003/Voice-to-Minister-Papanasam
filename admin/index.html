@@ -948,11 +948,11 @@
 
             const prioritySelect = document.getElementById('modalPrioritySelect');
             const selectedPriority = prioritySelect ? prioritySelect.value : 'normal';
-            complaintsDB[complaintId].assigned = selectedVol;
-            complaintsDB[complaintId].priority = selectedPriority;
-            if (complaintsDB[complaintId].statusClass === 'badge-new') {
-                complaintsDB[complaintId].status = 'ஒதுக்கப்பட்டது';
-                complaintsDB[complaintId].statusClass = 'badge-assigned';
+            let newStatus = complaintsDB[complaintId].status;
+            let newStatusClass = complaintsDB[complaintId].statusClass;
+            if (newStatusClass === 'badge-new') {
+                newStatus = 'ஒதுக்கப்பட்டது';
+                newStatusClass = 'badge-assigned';
             }
 
             // Update timeline
@@ -981,21 +981,22 @@
                     foundActive = true;
                 }
             });
-            complaintsDB[complaintId].timeline = timeline;
-
             try {
-                if (typeof db !== 'undefined') {
-                    await db.collection('vtm_ppn_complaints').doc(complaintId).update({
-                        assigned: selectedVol,
-                        priority: selectedPriority,
-                        status: complaintsDB[complaintId].status,
-                        statusClass: complaintsDB[complaintId].statusClass,
-                        timeline: timeline,
-                        updatedAt: new Date().toISOString()
-                    });
-                    console.log('✅ Volunteer assigned in Firebase:', complaintId, selectedVol, 'Priority:', selectedPriority);
-                }
-            } catch (e) { console.log('Firebase assign error:', e); }
+                if (typeof db === 'undefined') throw new Error('Firebase not initialized');
+                await db.collection('vtm_ppn_complaints').doc(complaintId).update({
+                    assigned: selectedVol,
+                    priority: selectedPriority,
+                    status: newStatus,
+                    statusClass: newStatusClass,
+                    timeline: timeline,
+                    updatedAt: new Date().toISOString()
+                });
+                console.log('✅ Volunteer assigned in Firebase:', complaintId, selectedVol, 'Priority:', selectedPriority);
+            } catch (e) {
+                console.log('Firebase assign error:', e);
+                alert(`❌ Could not save volunteer assignment: ${e.message || e}\n\nYour session may not be signed in to Firebase — try logging out and back in.`);
+                return;
+            }
 
             document.getElementById('complaintDetailModal').remove();
             await loadFromFirebase();
@@ -1014,9 +1015,6 @@
                 'badge-resolved': 'தீர்வு ✓'
             };
             const newStatus = statusMap[newStatusClass] || 'புதியது';
-
-            complaintsDB[complaintId].status = newStatus;
-            complaintsDB[complaintId].statusClass = newStatusClass;
 
             // Update timeline based on new status
             const now = new Date();
@@ -1044,19 +1042,24 @@
                     if (t.time.includes('நிலுவை')) t.time = `${dateStr} - ${timeStr}`;
                 });
             }
-            complaintsDB[complaintId].timeline = timeline;
-
             try {
-                if (typeof db !== 'undefined') {
-                    await db.collection('vtm_ppn_complaints').doc(complaintId).update({
-                        status: newStatus,
-                        statusClass: newStatusClass,
-                        timeline: timeline,
-                        updatedAt: new Date().toISOString()
-                    });
-                    console.log('✅ Status updated in Firebase:', complaintId, newStatus);
-                }
-            } catch (e) { console.log('Firebase status update error:', e); }
+                if (typeof db === 'undefined') throw new Error('Firebase not initialized');
+                await db.collection('vtm_ppn_complaints').doc(complaintId).update({
+                    status: newStatus,
+                    statusClass: newStatusClass,
+                    timeline: timeline,
+                    updatedAt: new Date().toISOString()
+                });
+                console.log('✅ Status updated in Firebase:', complaintId, newStatus);
+            } catch (e) {
+                console.log('Firebase status update error:', e);
+                alert(`❌ Could not save status change: ${e.message || e}\n\nYour session may not be signed in to Firebase — try logging out and back in.`);
+                return;
+            }
+
+            complaintsDB[complaintId].status = newStatus;
+            complaintsDB[complaintId].statusClass = newStatusClass;
+            complaintsDB[complaintId].timeline = timeline;
 
             document.getElementById('complaintDetailModal').remove();
             renderComplaints();
@@ -1068,20 +1071,23 @@
         async function markResolvedFromVolunteer(complaintId) {
             if (!confirm('Mark this complaint as Resolved?')) return;
 
+            try {
+                if (typeof db === 'undefined') throw new Error('Firebase not initialized');
+                await db.collection('vtm_ppn_complaints').doc(complaintId).update({
+                    status: 'தீர்வு ✓',
+                    statusClass: 'badge-resolved',
+                    resolvedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+                console.log('✅ Marked resolved in Firebase:', complaintId);
+            } catch (e) {
+                console.log('Firebase resolve error:', e);
+                alert(`❌ Could not mark as resolved: ${e.message || e}\n\nYour session may not be signed in to Firebase — try logging out and back in.`);
+                return;
+            }
+
             complaintsDB[complaintId].status = 'தீர்வு ✓';
             complaintsDB[complaintId].statusClass = 'badge-resolved';
-
-            try {
-                if (typeof db !== 'undefined') {
-                    await db.collection('vtm_ppn_complaints').doc(complaintId).update({
-                        status: 'தீர்வு ✓',
-                        statusClass: 'badge-resolved',
-                        resolvedAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    });
-                    console.log('✅ Marked resolved in Firebase:', complaintId);
-                }
-            } catch (e) { console.log('Firebase resolve error:', e); }
 
             document.getElementById('complaintDetailModal').remove();
             renderComplaints();
@@ -1200,12 +1206,14 @@
                 const data = await res.json();
                 if (!res.ok || !data.token) {
                     console.log('Staff Firebase Auth sync error:', data.error || res.status);
-                    return;
+                    return false;
                 }
                 await firebase.auth().signInWithCustomToken(data.token);
                 console.log('✅ Signed into Firebase Auth as staff:', username);
+                return true;
             } catch (e) {
                 console.log('Staff Firebase Auth sync error:', e);
+                return false;
             }
         }
 
@@ -1232,7 +1240,7 @@
             }
             if (!ok) { alert('❌ Wrong password! Try again.'); document.getElementById('loginPassword').value = ''; return; }
 
-            syncStaffAccountAndSignIntoFirebase(username, password, account);
+            const firebaseSignedIn = await syncStaffAccountAndSignIntoFirebase(username, password, account);
 
             currentStaffUser = { ...account, lastLogin: new Date().toISOString() };
             delete currentStaffUser.salt; delete currentStaffUser.hash; delete currentStaffUser.password;
@@ -1241,7 +1249,9 @@
             document.getElementById('adminLayout').style.display = 'flex';
             updateStaffTopbar();
             setTimeout(() => { loadFromFirebase(); loadVolunteersFromFirebase(); setupRealtimeListener(); loadNotifications(); setupNotificationsRealtimeListener(); requestPushPermissionIfNeeded(); }, 500);
-            if (account.mustChangePassword) {
+            if (!firebaseSignedIn) {
+                alert(`⚠️ Signed in, but could not establish a secure Firebase session. Status changes and other updates will NOT save until this is resolved — try logging out and back in, or contact an administrator.`);
+            } else if (account.mustChangePassword) {
                 alert(`👋 Welcome, ${account.name}! ⚠️ You are using the default seed password — please register a personal account and stop using the shared "admin" login.`);
             } else {
                 alert(`👋 Welcome back, ${account.name}!`);
@@ -1279,7 +1289,7 @@
                 }
             } catch(e) { console.log('Staff Firebase save error:', e); }
 
-            syncStaffAccountAndSignIntoFirebase(username, password, newAccount);
+            const firebaseSignedIn = await syncStaffAccountAndSignIntoFirebase(username, password, newAccount);
 
             currentStaffUser = { ...newAccount, lastLogin: new Date().toISOString() };
             delete currentStaffUser.salt; delete currentStaffUser.hash;
@@ -1288,7 +1298,11 @@
             document.getElementById('adminLayout').style.display = 'flex';
             updateStaffTopbar();
             setTimeout(() => { loadFromFirebase(); loadVolunteersFromFirebase(); setupRealtimeListener(); loadNotifications(); setupNotificationsRealtimeListener(); requestPushPermissionIfNeeded(); }, 500);
-            alert(`✅ Registration Successful!\n\nWelcome, ${name}!\nStaff ID: ${staffId}\nUsername: ${username}\n\nUse these credentials to login next time.`);
+            if (!firebaseSignedIn) {
+                alert(`✅ Registration Successful, but ⚠️ could not establish a secure Firebase session. Status changes and other updates will NOT save until this is resolved — try logging out and back in, or contact an administrator.\n\nStaff ID: ${staffId}\nUsername: ${username}`);
+            } else {
+                alert(`✅ Registration Successful!\n\nWelcome, ${name}!\nStaff ID: ${staffId}\nUsername: ${username}\n\nUse these credentials to login next time.`);
+            }
         }
 
         function updateStaffTopbar() {
