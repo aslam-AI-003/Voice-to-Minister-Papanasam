@@ -579,20 +579,37 @@
             }
         }
 
+        // The Firestore SDK call inside this occasionally hangs forever with
+        // no error or rejection (observed intermittently in production,
+        // Firebase compat SDK 9.23.0) — races it against a timeout so a
+        // stuck call can't leave the dashboard silently empty forever.
+        function withTimeout(promise, ms) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timed out after ' + ms + 'ms')), ms))
+            ]);
+        }
+
         // ===== LOAD FROM FIREBASE =====
-        async function loadFromFirebase() {
+        async function loadFromFirebase(isRetry) {
             try {
                 if (window.VoiceToMinister_DB) {
-                    const fc = await VoiceToMinister_DB.getAllComplaints();
+                    const fc = await withTimeout(VoiceToMinister_DB.getAllComplaints(), 6000);
                     if (fc && Object.keys(fc).length > 0) {
                         complaintsDB = fc;
                     }
                 } else if (typeof db !== 'undefined') {
-                    const snapshot = await db.collection('vtm_ppn_complaints').get();
+                    const snapshot = await withTimeout(db.collection('vtm_ppn_complaints').get(), 6000);
                     complaintsDB = {};
                     snapshot.forEach(doc => { complaintsDB[doc.id] = doc.data(); });
                 }
-            } catch (e) { console.log('Firebase load error:', e); }
+            } catch (e) {
+                console.log('Firebase load error:', e);
+                if (!isRetry) {
+                    console.log('Retrying loadFromFirebase once...');
+                    return loadFromFirebase(true);
+                }
+            }
             renderComplaints();
             updateDashboardLive();
             document.getElementById('lastRefresh').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
@@ -761,15 +778,53 @@
             n.onclick = () => { window.focus(); goToNotifications(); n.close(); };
         }
 
+        // Short two-tone alert beep, generated on the fly (no audio file
+        // dependency) — plays whenever a new notification arrives so staff
+        // notice it even with the tab in the background, independent of
+        // whether they've granted OS-level push notification permission.
+        function playNotificationSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                [880, 1100].forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    const startTime = ctx.currentTime + i * 0.18;
+                    gain.gain.setValueAtTime(0.001, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.3, startTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.16);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.18);
+                });
+            } catch (e) { console.log('Notification sound error:', e); }
+        }
+
         function setupNotificationsRealtimeListener() {
             if (!window.CitizenConnect_DB || !CitizenConnect_DB.isConnected()) return;
             CitizenConnect_DB.onNewNotification((notif) => {
                 loadNotifications();
                 showPushAlert(notif);
+                playNotificationSound();
             });
         }
 
         // ===== RENDER COMPLAINTS TABLE =====
+        // Complaint numbering (the trailing digits in an ID like TVK-2026-00135)
+        // is not reliably sequential over time — multiple sites/counters can
+        // assign IDs out of order relative to when a complaint actually came
+        // in. createdAt is the real submission time; prefer it, and only fall
+        // back to parsing the ID for any older record that predates it.
+        function complaintTimestamp(c) {
+            if (c.createdAt) {
+                const t = new Date(c.createdAt).getTime();
+                if (!isNaN(t)) return t;
+            }
+            return parseInt((c.id || '').split('-').pop()) || 0;
+        }
+
         function renderComplaints() {
             updateAreaDropdowns();
             const statusFilter = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'all';
@@ -779,11 +834,7 @@
             if (statusFilter !== 'all') all = all.filter(c => c.statusClass === statusFilter);
             if (areaFilter !== 'all') all = all.filter(c => c.area === areaFilter);
 
-            all.sort((a, b) => {
-                const numA = parseInt((a.id || '').split('-').pop()) || 0;
-                const numB = parseInt((b.id || '').split('-').pop()) || 0;
-                return numB - numA;
-            });
+            all.sort((a, b) => complaintTimestamp(b) - complaintTimestamp(a));
 
             const tbody = document.getElementById('complaintsTableBody');
             if (!tbody) return;
@@ -1192,29 +1243,37 @@
         // This admin panel deploys on the same origin as the API route, so a
         // relative path works here (see Citizen-Connect-Admin for the same
         // function using an absolute URL, since it deploys elsewhere).
+        async function fetchStaffAuthToken(username, password, account) {
+            const res = await fetch('/api/staff-auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username, password,
+                    name: account.name, mobile: account.mobile,
+                    role: account.role, area: account.area
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.token) throw new Error(data.error || ('status ' + res.status));
+            return data.token;
+        }
+
+        // signInWithCustomToken (and the fetch above) have occasionally hung
+        // forever with no error in production — race each attempt against a
+        // timeout and retry once, so a stuck call doesn't silently leave
+        // staff signed out of Firebase for the rest of the session.
         async function syncStaffAccountAndSignIntoFirebase(username, password, account) {
-            try {
-                const res = await fetch('/api/staff-auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username, password,
-                        name: account.name, mobile: account.mobile,
-                        role: account.role, area: account.area
-                    })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.token) {
-                    console.log('Staff Firebase Auth sync error:', data.error || res.status);
-                    return false;
+            for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    const token = await withTimeout(fetchStaffAuthToken(username, password, account), 6000);
+                    await withTimeout(firebase.auth().signInWithCustomToken(token), 6000);
+                    console.log('✅ Signed into Firebase Auth as staff:', username);
+                    return true;
+                } catch (e) {
+                    console.log(`Staff Firebase Auth sync error (attempt ${attempt}):`, e);
                 }
-                await firebase.auth().signInWithCustomToken(data.token);
-                console.log('✅ Signed into Firebase Auth as staff:', username);
-                return true;
-            } catch (e) {
-                console.log('Staff Firebase Auth sync error:', e);
-                return false;
             }
+            return false;
         }
 
         async function staffLogin() {
@@ -1615,11 +1674,7 @@
             }
 
             // Latest complaints table (top 10)
-            const sorted = [...all].sort((a, b) => {
-                const numA = parseInt((a.id || '').split('-').pop()) || 0;
-                const numB = parseInt((b.id || '').split('-').pop()) || 0;
-                return numB - numA;
-            }).slice(0, 10);
+            const sorted = [...all].sort((a, b) => complaintTimestamp(b) - complaintTimestamp(a)).slice(0, 10);
             const dashBody = document.getElementById('dashTableBody');
             if (dashBody) {
                 dashBody.innerHTML = sorted.map(c => {
