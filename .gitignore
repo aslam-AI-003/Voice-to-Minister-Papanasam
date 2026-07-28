@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*
+*.pem
+*-firebase-adminsdk-*.json
+qa-tests/*.log
+qa-tests/screenshots/

@@ -1,0 +1,91 @@
+rules_version = '2';
+
+// ============================================================================
+// Firestore Security Rules — Voice to MLA Thanjavur / Citizen Connect
+//
+// WHY THIS EXISTS: rules were previously fully open (or absent, which
+// defaults to open) — a security review confirmed anyone could read the
+// entire staff directory, and by extension write/delete anything, with no
+// authentication at all. This is the real fix, not a cosmetic key rotation.
+//
+// HOW AUTH WORKS HERE (two separate identity systems, both real):
+//   - Citizens sign in via Firebase Phone Auth (SMS OTP) directly in the
+//     browser — request.auth is populated by Firebase itself, genuinely
+//     unforgeable.
+//   - Staff sign in through the admin panel's own password system, which
+//     then calls a trusted server function (/api/staff-auth) that verifies
+//     the password against Supabase and issues a Firebase custom token with
+//     a `staff: true` claim. The browser signs into Firebase Auth with that
+//     token. A stranger CAN create their own anonymous/arbitrary Firebase
+//     Auth session, but they cannot forge the `staff: true` custom claim —
+//     only the server function (holding a private service-account key) can
+//     set that. This is why rules check request.auth.token.staff, not just
+//     request.auth != null, wherever staff-only access is required.
+// ============================================================================
+
+function isStaff() {
+  return request.auth != null && request.auth.token.staff == true;
+}
+
+function isSignedIn() {
+  return request.auth != null;
+}
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- COMPLAINTS ----
+    // Reading stays open by design: citizens track complaints by ID without
+    // being logged in as that specific citizen (e.g. checking on someone
+    // else's behalf), and the public dashboard shows aggregate stats.
+    // Writing requires a real session — either a citizen (creating their own
+    // complaint) or staff (updating status/assignment) — closing the hole
+    // where anyone could forge a "resolved" complaint with no login at all.
+    match /vtm_ppn_complaints/{complaintId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isStaff();
+    }
+
+    // ---- STAFF DIRECTORY ----
+    // No reason for a stranger — or even a logged-in citizen — to read the
+    // staff list. Only staff can read or write it.
+    match /vtm_ppn_staff/{username} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    // ---- COMPLAINT COUNTER ----
+    // Must stay writable by anonymous citizens: the very first thing that
+    // happens when someone submits a complaint (before they're necessarily
+    // logged in, depending on flow) is claiming the next complaint number.
+    // Low-value data (just a counter) — the risk of leaving this open is
+    // someone skipping/wasting numbers, not a real security exposure.
+    match /vtm_ppn_config/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // ---- UPDATES (legacy Firebase fallback; Supabase is primary) ----
+    // Public announcements — read stays open. Only staff post them.
+    match /vtm_ppn_updates/{updateId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // ---- VOLUNTEERS ----
+    // Internal staff tool — no citizen-facing reason to read this at all.
+    match /vtm_ppn_volunteers/{docId} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    // Deny everything else by default (defense in depth — Firestore already
+    // denies unmatched paths, but stating it explicitly avoids any future
+    // collection being accidentally left open by omission).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -536,6 +536,7 @@
     <!-- Firebase SDK (Legacy fallback) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="firebase-db.js"></script>
     <script src="escape-html.js"></script>
 
@@ -1146,10 +1147,25 @@
         }
         ensureSeedAdmin();
 
+        // On reload, Firebase Auth's own session (separate from this app's
+        // vtm_ppn_admin_staff flag) normally survives via its default LOCAL
+        // persistence — but if it doesn't (cleared storage, different
+        // browser profile, etc.), Firestore writes to staff-only collections
+        // (e.g. volunteers) would silently fail under the real security
+        // rules with no explanation to the user. Check for a real Firebase
+        // session before trusting the local staff flag; if it's missing,
+        // require a fresh login rather than limping along half-broken.
         if (currentStaffUser) {
-            document.getElementById('adminLoginOverlay').style.display = 'none';
-            document.getElementById('adminLayout').style.display = 'flex';
-            setTimeout(() => { updateStaffTopbar(); loadFromFirebase(); loadVolunteersFromFirebase(); setupRealtimeListener(); loadNotifications(); setupNotificationsRealtimeListener(); requestPushPermissionIfNeeded(); }, 300);
+            firebase.auth().onAuthStateChanged((firebaseUser) => {
+                if (firebaseUser) {
+                    document.getElementById('adminLoginOverlay').style.display = 'none';
+                    document.getElementById('adminLayout').style.display = 'flex';
+                    setTimeout(() => { updateStaffTopbar(); loadFromFirebase(); loadVolunteersFromFirebase(); setupRealtimeListener(); loadNotifications(); setupNotificationsRealtimeListener(); requestPushPermissionIfNeeded(); }, 300);
+                } else {
+                    currentStaffUser = null;
+                    localStorage.removeItem('vtm_ppn_admin_staff');
+                }
+            });
         }
 
         function showRegisterView() {
@@ -1159,6 +1175,38 @@
         function showLoginView() {
             document.getElementById('registerFormView').classList.add('hidden');
             document.getElementById('loginFormView').classList.remove('hidden');
+        }
+
+        // Asks the server-side /api/staff-auth function to sync this staff
+        // account into Supabase (if not already there) and issue a real
+        // Firebase Auth session for it. The browser's anon key intentionally
+        // cannot write to the `staff` table directly (a security fix from an
+        // earlier review) — only this trusted server function can, since it
+        // authenticates with a private key that never reaches the browser.
+        // This admin panel deploys on the same origin as the API route, so a
+        // relative path works here (see Citizen-Connect-Admin for the same
+        // function using an absolute URL, since it deploys elsewhere).
+        async function syncStaffAccountAndSignIntoFirebase(username, password, account) {
+            try {
+                const res = await fetch('/api/staff-auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username, password,
+                        name: account.name, mobile: account.mobile,
+                        role: account.role, area: account.area
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.token) {
+                    console.log('Staff Firebase Auth sync error:', data.error || res.status);
+                    return;
+                }
+                await firebase.auth().signInWithCustomToken(data.token);
+                console.log('✅ Signed into Firebase Auth as staff:', username);
+            } catch (e) {
+                console.log('Staff Firebase Auth sync error:', e);
+            }
         }
 
         async function staffLogin() {
@@ -1183,6 +1231,8 @@
                 }
             }
             if (!ok) { alert('❌ Wrong password! Try again.'); document.getElementById('loginPassword').value = ''; return; }
+
+            syncStaffAccountAndSignIntoFirebase(username, password, account);
 
             currentStaffUser = { ...account, lastLogin: new Date().toISOString() };
             delete currentStaffUser.salt; delete currentStaffUser.hash; delete currentStaffUser.password;
@@ -1229,6 +1279,8 @@
                 }
             } catch(e) { console.log('Staff Firebase save error:', e); }
 
+            syncStaffAccountAndSignIntoFirebase(username, password, newAccount);
+
             currentStaffUser = { ...newAccount, lastLogin: new Date().toISOString() };
             delete currentStaffUser.salt; delete currentStaffUser.hash;
             localStorage.setItem('vtm_ppn_admin_staff', JSON.stringify(currentStaffUser));
@@ -1260,6 +1312,11 @@
             e.preventDefault();
             currentStaffUser = null;
             localStorage.removeItem('vtm_ppn_admin_staff');
+            // Also end the real Firebase Auth session — otherwise the staff:
+            // true claim stays live in this browser after logout, letting
+            // whoever uses it next skip straight past the login screen for
+            // any Firestore access that only checks request.auth.
+            firebase.auth().signOut().catch(() => {});
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
             showLoginView();
