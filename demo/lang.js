@@ -218,6 +218,21 @@ function t(key) {
     return key;
 }
 
+// Complaint status is stored on each record as a raw Tamil string (e.g.
+// 'புதியது'), not a translation key, so it never went through t(). statusClass
+// (e.g. 'badge-new') is language-independent, so use it to look up the label
+// in the current language instead of trusting the stored status string.
+const STATUS_CLASS_TO_KEY = {
+    'badge-new': 'status_new',
+    'badge-assigned': 'status_assigned',
+    'badge-progress': 'status_progress',
+    'badge-resolved': 'status_resolved'
+};
+function localizedStatus(statusClass, fallback) {
+    const key = STATUS_CLASS_TO_KEY[statusClass];
+    return key ? t(key) : (fallback || statusClass);
+}
+
 // Toggle language - called from button
 function toggleLanguage() {
     currentLang = currentLang === 'ta' ? 'en' : 'ta';
@@ -234,6 +249,15 @@ function toggleLanguage() {
     if (typeof onDepartmentChange === 'function') {
         const deptSelect = document.getElementById('govDepartment');
         if (deptSelect && deptSelect.value) onDepartmentChange();
+    }
+    // Re-render complaint status text (stored as raw Tamil, not a translation key)
+    if (typeof searchComplaint === 'function') {
+        const ti = document.getElementById('trackInput');
+        if (ti && ti.value) searchComplaint();
+    }
+    if (typeof loadCitizenComplaints === 'function') {
+        const si = document.getElementById('citizenSearchInput');
+        if (si && si.value) loadCitizenComplaints();
     }
     if (typeof showNotification === 'function') {
         showNotification(currentLang === 'en' ? '🌐 Switched to English' : '🌐 தமிழுக்கு மாற்றப்பட்டது', 'info');
