@@ -3112,30 +3112,23 @@ if (complaintForm) {
 
             const nc = {id:lastComplaintId,govId:govId,title:title+(areaNames[area]?' - '+areaNames[area]:''),description:desc||'',category:categoryNames[catVal]||catVal,area:areaNames[area]||area,citizenName:cn,mobileNumber:mn,assigned:'-',date:ds,status:'புதியது',statusClass:'badge-new',createdAt:now.toISOString(),location:gpsData,address:fullAddress,imageData:imageData,hasVoiceNote:!!inlinePlayer,voiceAudioData:voiceAudioBase64,timeline:[{text:'புகார் பதிவு செய்யப்பட்டது',time:`${ds} - ${ts}`,state:'completed'},{text:'ஆய்வு செய்யப்படுகிறது',time:'நிலுவையில்...',state:'active'},{text:'துறைக்கு ஒதுக்கப்படும்',time:'நிலுவையில்...',state:''},{text:'பணி தொடங்கப்படும்',time:'நிலுவையில்...',state:''},{text:'தீர்வு & உறுதிப்படுத்தல்',time:'நிலுவையில்...',state:''}]};
             complaintsDB[lastComplaintId] = nc;
-            if (window.VoiceToMinister_DB) {
-                await VoiceToMinister_DB.saveComplaint(nc);
-            }
+            const saved = window.VoiceToMinister_DB ? await VoiceToMinister_DB.saveComplaint(nc) : true;
             document.getElementById('generatedComplaintId').textContent = govId;
             sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false;
-            // Clear voice localStorage after successful save
-            try { localStorage.removeItem('vtm_voice_latest'); } catch(e) {}
-            document.getElementById('successModal').classList.add('active');
-            complaintForm.reset(); document.querySelectorAll('.cat-card-new').forEach(c=>c.classList.remove('selected'));
-            if (document.getElementById('uploadPreview')) document.getElementById('uploadPreview').innerHTML = '';
-            currentStep = 1; updateWizardUI();
-        } catch (err) {
-            console.error('❌ Complaint save error:', err);
-            sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false;
-            // Show specific error messages based on failure type
-            if (err.message === 'STORAGE_AUTH_ERROR') {
-                showNotification('❌ படம்/குரல் பதிவேற்ற அனுமதி இல்லை! மீண்டும் Login செய்து முயற்சிக்கவும்.','error');
-            } else if (err.message === 'STORAGE_NETWORK_ERROR') {
-                showNotification('❌ இணைய இணைப்பு பிழை! உங்கள் இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.','error');
-            } else if (err.message === 'SIZE_LIMIT_ERROR') {
-                showNotification('❌ படம்/voice note மிகப் பெரியது! சிறிய கோப்பை தேர்வு செய்து மீண்டும் முயற்சிக்கவும்.','error');
+            if (saved) {
+                // Clear voice localStorage after successful save
+                try { localStorage.removeItem('vtm_voice_latest'); } catch(e) {}
+                document.getElementById('successModal').classList.add('active');
+                complaintForm.reset(); document.querySelectorAll('.cat-card-new').forEach(c=>c.classList.remove('selected'));
+                if (document.getElementById('uploadPreview')) document.getElementById('uploadPreview').innerHTML = '';
+                currentStep = 1; updateWizardUI();
             } else {
                 showNotification('❌ புகார் சேமிக்க முடியவில்லை! இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.','error');
             }
+        } catch (err) {
+            console.error('❌ Complaint save error:', err);
+            sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false;
+            showNotification('❌ புகார் சேமிக்க முடியவில்லை! இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.','error');
         }
     });
 }

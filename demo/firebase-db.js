@@ -19,42 +19,62 @@ const VoiceToMinister_DB = {
     // --- COMPLAINTS ---
     
     // Save a new complaint to Firestore
-    // Returns: { success: true } or { success: false, error: 'message' }
     async saveComplaint(complaint) {
         try {
-            // Strip large binary data (base64 image/voice) to avoid exceeding Firestore's 1MB document limit.
-            // Upload them to Firebase Storage first - ALL data must be preserved.
             const complaintData = { ...complaint };
             let imageUrl = '';
             let voiceUrl = '';
 
-            // Upload image to Firebase Storage if present - MANDATORY (no data loss)
+            // Try to upload image to Firebase Storage (graceful - won't block save)
             if (complaintData.imageData && complaintData.imageData.length > 100) {
-                const storageRef = firebase.storage().ref();
-                const imgRef = storageRef.child(`complaints/${complaint.id}/photo.jpg`);
-                await imgRef.putString(complaintData.imageData, 'data_url');
-                imageUrl = await imgRef.getDownloadURL();
-                console.log('📷 Image uploaded to Storage');
+                try {
+                    const storageRef = firebase.storage().ref();
+                    const imgRef = storageRef.child(`complaints/${complaint.id}/photo.jpg`);
+                    await imgRef.putString(complaintData.imageData, 'data_url');
+                    imageUrl = await imgRef.getDownloadURL();
+                    console.log('📷 Image uploaded to Storage');
+                } catch (storageErr) {
+                    console.warn('⚠️ Image upload to Storage failed, will store in Firestore:', storageErr.message);
+                    // Keep imageData in complaintData so it saves to Firestore directly
+                }
             }
 
-            // Upload voice note to Firebase Storage if present - MANDATORY (no data loss)
+            // Try to upload voice to Firebase Storage (graceful - won't block save)
             if (complaintData.voiceAudioData && complaintData.voiceAudioData.length > 100) {
-                const storageRef = firebase.storage().ref();
-                const audioRef = storageRef.child(`complaints/${complaint.id}/voice.webm`);
-                await audioRef.putString(complaintData.voiceAudioData, 'data_url');
-                voiceUrl = await audioRef.getDownloadURL();
-                console.log('🎤 Voice note uploaded to Storage');
+                try {
+                    const storageRef = firebase.storage().ref();
+                    const audioRef = storageRef.child(`complaints/${complaint.id}/voice.webm`);
+                    await audioRef.putString(complaintData.voiceAudioData, 'data_url');
+                    voiceUrl = await audioRef.getDownloadURL();
+                    console.log('🎤 Voice note uploaded to Storage');
+                } catch (storageErr) {
+                    console.warn('⚠️ Voice upload to Storage failed:', storageErr.message);
+                }
             }
 
-            // Remove large base64 fields from the Firestore document
-            delete complaintData.imageData;
-            delete complaintData.voiceAudioData;
+            // If Storage upload succeeded, remove large base64 and store URL only
+            if (imageUrl) {
+                delete complaintData.imageData;
+                complaintData.imageUrl = imageUrl;
+            }
+            if (voiceUrl) {
+                delete complaintData.voiceAudioData;
+                complaintData.voiceUrl = voiceUrl;
+            }
+            
+            // If Storage failed but data exists, check if it's too big for Firestore
+            // Firestore limit is 1MB per document. Remove if too large.
+            if (complaintData.imageData && complaintData.imageData.length > 900000) {
+                console.warn('⚠️ Image too large for Firestore, removing to prevent save failure');
+                delete complaintData.imageData;
+            }
+            if (complaintData.voiceAudioData && complaintData.voiceAudioData.length > 900000) {
+                console.warn('⚠️ Voice too large for Firestore, removing to prevent save failure');
+                delete complaintData.voiceAudioData;
+            }
 
-            // Store only the download URLs (data is safe in Storage)
-            complaintData.imageUrl = imageUrl;
-            complaintData.voiceUrl = voiceUrl;
-            complaintData.hasImage = !!imageUrl;
-            complaintData.hasVoiceNote = !!voiceUrl;
+            complaintData.hasImage = !!(imageUrl || complaintData.imageData);
+            complaintData.hasVoiceNote = !!(voiceUrl || complaintData.voiceAudioData);
 
             await db.collection('vtm_ppn_complaints').doc(complaint.id).set({
                 ...complaintData,
@@ -65,15 +85,7 @@ const VoiceToMinister_DB = {
             return true;
         } catch (error) {
             console.error('❌ Error saving complaint:', error);
-            // Provide specific error info so the UI can show meaningful message
-            if (error.code === 'storage/unauthorized' || error.code === 'storage/unauthenticated') {
-                throw new Error('STORAGE_AUTH_ERROR');
-            } else if (error.code === 'storage/retry-limit-exceeded' || error.code === 'storage/canceled') {
-                throw new Error('STORAGE_NETWORK_ERROR');
-            } else if (error.message && error.message.includes('exceeded')) {
-                throw new Error('SIZE_LIMIT_ERROR');
-            }
-            throw error; // Re-throw so caller can handle
+            return false;
         }
     },
 
