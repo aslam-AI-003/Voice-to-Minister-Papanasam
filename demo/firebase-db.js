@@ -19,10 +19,45 @@ const VoiceToMinister_DB = {
     // --- COMPLAINTS ---
     
     // Save a new complaint to Firestore
+    // Returns: { success: true } or { success: false, error: 'message' }
     async saveComplaint(complaint) {
         try {
+            // Strip large binary data (base64 image/voice) to avoid exceeding Firestore's 1MB document limit.
+            // Upload them to Firebase Storage first - ALL data must be preserved.
+            const complaintData = { ...complaint };
+            let imageUrl = '';
+            let voiceUrl = '';
+
+            // Upload image to Firebase Storage if present - MANDATORY (no data loss)
+            if (complaintData.imageData && complaintData.imageData.length > 100) {
+                const storageRef = firebase.storage().ref();
+                const imgRef = storageRef.child(`complaints/${complaint.id}/photo.jpg`);
+                await imgRef.putString(complaintData.imageData, 'data_url');
+                imageUrl = await imgRef.getDownloadURL();
+                console.log('📷 Image uploaded to Storage');
+            }
+
+            // Upload voice note to Firebase Storage if present - MANDATORY (no data loss)
+            if (complaintData.voiceAudioData && complaintData.voiceAudioData.length > 100) {
+                const storageRef = firebase.storage().ref();
+                const audioRef = storageRef.child(`complaints/${complaint.id}/voice.webm`);
+                await audioRef.putString(complaintData.voiceAudioData, 'data_url');
+                voiceUrl = await audioRef.getDownloadURL();
+                console.log('🎤 Voice note uploaded to Storage');
+            }
+
+            // Remove large base64 fields from the Firestore document
+            delete complaintData.imageData;
+            delete complaintData.voiceAudioData;
+
+            // Store only the download URLs (data is safe in Storage)
+            complaintData.imageUrl = imageUrl;
+            complaintData.voiceUrl = voiceUrl;
+            complaintData.hasImage = !!imageUrl;
+            complaintData.hasVoiceNote = !!voiceUrl;
+
             await db.collection('vtm_ppn_complaints').doc(complaint.id).set({
-                ...complaint,
+                ...complaintData,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
@@ -30,7 +65,15 @@ const VoiceToMinister_DB = {
             return true;
         } catch (error) {
             console.error('❌ Error saving complaint:', error);
-            return false;
+            // Provide specific error info so the UI can show meaningful message
+            if (error.code === 'storage/unauthorized' || error.code === 'storage/unauthenticated') {
+                throw new Error('STORAGE_AUTH_ERROR');
+            } else if (error.code === 'storage/retry-limit-exceeded' || error.code === 'storage/canceled') {
+                throw new Error('STORAGE_NETWORK_ERROR');
+            } else if (error.message && error.message.includes('exceeded')) {
+                throw new Error('SIZE_LIMIT_ERROR');
+            }
+            throw error; // Re-throw so caller can handle
         }
     },
 

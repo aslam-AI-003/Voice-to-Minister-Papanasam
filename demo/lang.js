@@ -14,10 +14,10 @@ const TRANSLATIONS = {
     'nav_dashboard': { ta: 'நிலை பலகை', en: 'Dashboard' },
 
     // ===== HERO SECTION =====
-    'hero_badge': { ta: '🏛️ TAMILAGA VETTRI KAZHAGAM', en: '🏛️ TAMILAGA VETTRI KAZHAGAM' },
+    'hero_badge': { ta: '🏛️ தமிழக வெற்றி கழகம்', en: '🏛️ TAMILAGA VETTRI KAZHAGAM' },
     'hero_title': { ta: 'மக்கள் குறை தீர்வு மேடை', en: "Citizen Grievance Platform" },
     'hero_subtitle': { ta: 'தஞ்சாவூர் தொகுதி', en: 'Thanjavur Constituency' },
-    'hero_desc': { ta: 'தஞ்சாவூர் தொகுதியின் ஒவ்வொரு புகார்களும் MLA அலுவலகம் வரை நேரடியாக சேரும். புகார் செய்யுங்கள், நிலையை track செய்யுங்கள்.', en: 'Every voice from Thanjavur constituency directly reaches the MLA office. File complaints, track status in real-time.' },
+    'hero_desc': { ta: 'தஞ்சாவூர் தொகுதியின் ஒவ்வொரு புகார்களும் சட்டமன்ற உறுப்பினர் அலுவலகம் வரை நேரடியாக சேரும். புகார் செய்யுங்கள், நிலையை கண்காணியுங்கள்.', en: 'Every voice from Thanjavur constituency directly reaches the MLA office. File complaints, track status in real-time.' },
     'hero_btn_complaint': { ta: '<i class="fas fa-plus-circle"></i> புகார் பதிவு செய்', en: '<i class="fas fa-plus-circle"></i> File Complaint' },
     'hero_btn_track': { ta: '<i class="fas fa-search"></i> புகார் நிலை காண', en: '<i class="fas fa-search"></i> Track Status' },
 
@@ -30,7 +30,7 @@ const TRANSLATIONS = {
     // ===== HOW IT WORKS =====
     'how_title': { ta: 'எப்படி செயல்படுகிறது?', en: 'How It Works?' },
     'step1_title': { ta: 'புகார் பதிவு', en: 'Register Complaint' },
-    'step1_desc': { ta: 'உங்கள் பிரச்சனையை Tamil-ல பேசி அல்லது type செய்து பதிவு செய்யுங்கள்', en: 'Speak in Tamil or type your complaint to register it' },
+    'step1_desc': { ta: 'உங்கள் பிரச்சனையை தமிழில் பேசி அல்லது எழுதி பதிவு செய்யுங்கள்', en: 'Speak in Tamil or type your complaint to register it' },
     'step2_how_title': { ta: 'ஒதுக்கப்படும்', en: 'Gets Assigned' },
     'step2_how_desc': { ta: 'MLA அலுவலகம் சரியான அதிகாரிக்கு ஒதுக்கும்', en: 'MLA office assigns to the right official' },
     'step3_how_title': { ta: 'பணி நடைபெறும்', en: 'Work In Progress' },
@@ -45,8 +45,8 @@ const TRANSLATIONS = {
     // ===== MLA SECTION =====
     'mla_card_title': { ta: 'சட்டமன்ற உறுப்பினர் - தஞ்சாவூர்', en: 'MLA - Thanjavur' },
     'mla_card_party': { ta: 'தமிழக வெற்றி கழகம்', en: 'Tamilaga Vettri Kazhagam' },
-    'mla_title_text': { ta: '🏛️ MLA - Thanjavur Constituency ', en: '🏛️ MLA - Thanjavur Constituency ' },
-    'mla_party_text': { ta: 'Tamil Nadu Legislative Assembly | Tamilaga Vettri Kazhagam', en: 'Tamil Nadu Legislative Assembly | Tamilaga Vettri Kazhagam' },
+    'mla_title_text': { ta: '🏛️ சட்டமன்ற உறுப்பினர் - தஞ்சாவூர் தொகுதி', en: '🏛️ MLA - Thanjavur Constituency' },
+    'mla_party_text': { ta: 'தமிழ்நாடு சட்டமன்றம் | தமிழக வெற்றி கழகம்', en: 'Tamil Nadu Legislative Assembly | Tamilaga Vettri Kazhagam' },
     'mla_quote': { ta: '"மக்கள் சேவையே மகேசன் சேவை. தஞ்சாவூர் தொகுதி மக்களின் அனைத்து குறைகளும் தீர்க்கப்படும்."', en: '"Service to people is service to God. All grievances of Thanjavur constituency will be resolved."' },
 
     // ===== COMPLAINT FORM =====
@@ -61,36 +61,36 @@ const TRANSLATIONS = {
     // Step 1
     'step1_heading': { ta: '👤 உங்கள் தகவல்கள்', en: '👤 Your Information' },
     'step1_sub': { ta: 'புகார் செய்பவரின் விவரங்கள்', en: 'Complainant details' },
-    'label_name': { ta: 'பெயர் (Name) <span class="required">*</span>', en: 'Name <span class="required">*</span>' },
-    'label_mobile': { ta: 'தொலைபேசி எண் (Mobile) <span class="required">*</span>', en: 'Mobile Number <span class="required">*</span>' },
-    'label_ward': { ta: 'வார்டு எண் (Ward No.) <span class="required">*</span>', en: 'Ward Number <span class="required">*</span>' },
-    'label_street': { ta: 'தெரு (Street) <span class="required">*</span>', en: 'Street <span class="required">*</span>' },
+    'label_name': { ta: 'பெயர் <span class="required">*</span>', en: 'Name <span class="required">*</span>' },
+    'label_mobile': { ta: 'தொலைபேசி எண் <span class="required">*</span>', en: 'Mobile Number <span class="required">*</span>' },
+    'label_ward': { ta: 'வார்டு எண் <span class="required">*</span>', en: 'Ward Number <span class="required">*</span>' },
+    'label_street': { ta: 'தெரு <span class="required">*</span>', en: 'Street <span class="required">*</span>' },
     'ph_name': { ta: 'உங்கள் முழு பெயர்', en: 'Your full name' },
     'ph_mobile': { ta: '98765 43210', en: '98765 43210' },
 
     // Step 2
     'step2_heading': { ta: '📋 புகார் விவரங்கள்', en: '📋 Complaint Details' },
     'step2_sub': { ta: 'பிரச்சனை என்ன என்பதை தெரிவிக்கவும்', en: 'Describe the issue' },
-    'label_dept': { ta: 'Government Department / குறை தொடர்புடைய அரசு துறை <span class="required">*</span>', en: 'Government Department <span class="required">*</span>' },
-    'label_grievance': { ta: 'Grievance Type / குறையின் வகை <span class="required">*</span>', en: 'Grievance Type <span class="required">*</span>' },
+    'label_dept': { ta: 'குறை தொடர்புடைய அரசு துறை <span class="required">*</span>', en: 'Government Department <span class="required">*</span>' },
+    'label_grievance': { ta: 'குறையின் வகை <span class="required">*</span>', en: 'Grievance Type <span class="required">*</span>' },
     'label_title': { ta: 'புகார் தலைப்பு <span class="required">*</span>', en: 'Complaint Title <span class="required">*</span>' },
     'label_desc': { ta: 'விரிவான விளக்கம்', en: 'Detailed Description' },
     'label_photo': { ta: 'புகைப்படம் இணைக்க', en: 'Attach Photo/Video' },
-    'ph_title': { ta: 'உதா: சாலையில் பள்ளம், Street light வேலை செய்யல', en: 'E.g.: Pothole on road, Street light not working' },
+    'ph_title': { ta: 'உதா: சாலையில் பள்ளம், தெரு விளக்கு வேலை செய்யல', en: 'E.g.: Pothole on road, Street light not working' },
     'ph_desc': { ta: 'பிரச்சனையை விரிவாக எழுதுங்கள்... அல்லது 🎤 பொத்தானை அழுத்தி தமிழில் பேசுங்கள்', en: 'Describe the issue in detail... or press 🎤 and speak in Tamil' },
-    'upload_text': { ta: 'Click to upload or drag & drop', en: 'Click to upload or drag & drop' },
-    'upload_format': { ta: 'JPG, PNG, MP4 (Max 10MB)', en: 'JPG, PNG, MP4 (Max 10MB)' },
-    'label_other_dept': { ta: 'Department பெயர் எழுதுங்கள் <span class="required">*</span>', en: 'Write Department Name <span class="required">*</span>' },
+    'upload_text': { ta: 'பதிவேற்ற Click செய்யவும் அல்லது இழுத்து விடவும்', en: 'Click to upload or drag & drop' },
+    'upload_format': { ta: 'JPG, PNG, MP4 (அதிகபட்சம் 10MB)', en: 'JPG, PNG, MP4 (Max 10MB)' },
+    'label_other_dept': { ta: 'துறையின் பெயர் எழுதுங்கள் <span class="required">*</span>', en: 'Write Department Name <span class="required">*</span>' },
 
     // Step 3
     'step3_heading': { ta: '📍 இடம் & சமர்ப்பிப்பு', en: '📍 Location & Submit' },
     'step3_sub': { ta: 'சரியான இடத்தை குறிப்பிடவும்', en: 'Specify the correct location' },
-    'label_gps': { ta: 'GPS இடம் (Location)', en: 'GPS Location' },
+    'label_gps': { ta: 'GPS இடம்', en: 'GPS Location' },
     'btn_location': { ta: '<i class="fas fa-crosshairs"></i> 📍 என் இடத்தை பெற', en: '<i class="fas fa-crosshairs"></i> 📍 Get My Location' },
     'location_placeholder': { ta: 'இடம் குறிப்பிடப்படவில்லை', en: 'Location not set' },
-    'map_placeholder': { ta: 'Location பெற்ற பின் Map இங்கே தெரியும்', en: 'Map will appear after getting location' },
+    'map_placeholder': { ta: 'இடம் பெற்ற பின் வரைபடம் இங்கே தெரியும்', en: 'Map will appear after getting location' },
     'label_address': { ta: 'முகவரி (விருப்பம்)', en: 'Address (Optional)' },
-    'ph_address': { ta: 'சாலை பெயர், அடையாளம் (Landmark)', en: 'Street name, Landmark' },
+    'ph_address': { ta: 'சாலை பெயர், அடையாளம்', en: 'Street name, Landmark' },
 
     // Review Summary
     'review_heading': { ta: '<i class="fas fa-clipboard-check"></i> உங்கள் புகார் சுருக்கம்', en: '<i class="fas fa-clipboard-check"></i> Your Complaint Summary' },
@@ -109,14 +109,14 @@ const TRANSLATIONS = {
     'track_title': { ta: '<i class="fas fa-search"></i> புகார் நிலை காண', en: '<i class="fas fa-search"></i> Track Complaint Status' },
     'track_sub': { ta: 'உங்கள் புகார் எந்த நிலையில் உள்ளது என பாருங்கள்', en: 'Check the current status of your complaint' },
     'track_btn': { ta: '<i class="fas fa-search"></i> தேடு', en: '<i class="fas fa-search"></i> Search' },
-    'ph_track': { ta: 'TVK/TNJ/2026/00101 அல்லது Mobile Number', en: 'TVK/TNJ/2026/00101 or Mobile Number' },
+    'ph_track': { ta: 'TVK/TNJ/2026/00101 அல்லது தொலைபேசி எண்', en: 'TVK/TNJ/2026/00101 or Mobile Number' },
 
     // ===== MY COMPLAINTS =====
     'mycomp_title': { ta: '<i class="fas fa-user-shield"></i> என் புகார்கள்', en: '<i class="fas fa-user-shield"></i> My Complaints' },
     'mycomp_sub': { ta: 'உங்கள் அனைத்து புகார்களின் நிலையை இங்கே பாருங்கள்', en: 'View status of all your complaints here' },
     'mycomp_search_btn': { ta: '<i class="fas fa-search"></i> தேடு', en: '<i class="fas fa-search"></i> Search' },
-    'mycomp_hint': { ta: 'Mobile Number enter செய்தால் உங்கள் அனைத்து புகார்களும் தெரியும்', en: 'Enter your Mobile Number to see all your complaints' },
-    'ph_citizen_search': { ta: 'உங்கள் Mobile Number அல்லது Complaint ID', en: 'Your Mobile Number or Complaint ID' },
+    'mycomp_hint': { ta: 'தொலைபேசி எண் உள்ளிட்டால் உங்கள் அனைத்து புகார்களும் தெரியும்', en: 'Enter your Mobile Number to see all your complaints' },
+    'ph_citizen_search': { ta: 'உங்கள் தொலைபேசி எண் அல்லது புகார் எண்', en: 'Your Mobile Number or Complaint ID' },
     'mycomp_total': { ta: 'மொத்த புகார்கள்', en: 'Total Complaints' },
     'mycomp_pending': { ta: 'நிலுவையில்', en: 'Pending' },
     'mycomp_resolved': { ta: 'தீர்வு', en: 'Resolved' },
@@ -127,7 +127,7 @@ const TRANSLATIONS = {
 
     // ===== DASHBOARD =====
     'dash_title': { ta: '<i class="fas fa-tachometer-alt"></i> தொகுதி நிலை அறிக்கை', en: '<i class="fas fa-tachometer-alt"></i> Constituency Status Report' },
-    'dash_sub': { ta: 'R. Vijaysaravanan | MLA - தஞ்சாவூர் தொகுதி', en: 'R. Vijaysaravanan | MLA - Thanjavur Constituency' },
+    'dash_sub': { ta: 'ஆர். விஜய்சரவணன் | சட்டமன்ற உறுப்பினர் - தஞ்சாவூர் தொகுதி', en: 'R. Vijaysaravanan | MLA - Thanjavur Constituency' },
     'dash_trust_title': { ta: '🏆 மக்கள் நம்பிக்கை குறியீடு', en: '🏆 People\'s Trust Index' },
     'dash_trust_sub': { ta: 'மக்கள் நம்பிக்கை மதிப்பெண்', en: 'People\'s Trust Score' },
     'dash_trust_label': { ta: 'நம்பிக்கை', en: 'Trust' },
@@ -159,19 +159,19 @@ const TRANSLATIONS = {
 
     // ===== LOGIN MODAL =====
     'login_title': { ta: 'மக்கள் குறை தீர்வு மேடை', en: 'Citizen Grievance Platform' },
-    'login_sub': { ta: 'Citizen Connect Thanjavur', en: 'Citizen Connect Thanjavur' },
+    'login_sub': { ta: 'மக்கள் இணைப்பு - தஞ்சாவூர்', en: 'Citizen Connect Thanjavur' },
     'login_cm_title': { ta: 'தமிழ்நாடு முதலமைச்சர்', en: 'Chief Minister of Tamil Nadu' },
     'login_cm_name': { ta: 'சி. ஜோசப் விஜய்', en: 'C. Joseph Vijay' },
     'login_mla_title': { ta: 'சட்டமன்ற உறுப்பினர் - தஞ்சாவூர்', en: 'MLA - Thanjavur' },
     'login_mla_name': { ta: 'ஆர். விஜய்சரவணன்', en: 'R. Vijaysaravanan' },
     'login_org': { ta: 'தமிழக வெற்றி கழகம் | தமிழ்நாடு அரசு', en: 'Tamilaga Vettri Kazhagam | Government of Tamil Nadu' },
-    'login_form_title': { ta: 'மொபைல் OTP Login', en: 'Mobile OTP Login' },
-    'login_form_sub': { ta: 'புகார் செய்ய Login செய்யுங்கள்', en: 'Login to file a complaint' },
-    'login_name_label': { ta: 'உங்கள் பெயர் (Name) <span class="required">*</span>', en: 'Your Name <span class="required">*</span>' },
-    'login_mobile_label': { ta: 'தொலைபேசி எண் (Phone Number) <span class="required">*</span>', en: 'Phone Number <span class="required">*</span>' },
-    'login_send_otp': { ta: '<i class="fas fa-paper-plane"></i> OTP அனுப்பு / Send OTP', en: '<i class="fas fa-paper-plane"></i> Send OTP' },
+    'login_form_title': { ta: 'மொபைல் OTP உள்நுழைவு', en: 'Mobile OTP Login' },
+    'login_form_sub': { ta: 'புகார் செய்ய உள்நுழையுங்கள்', en: 'Login to file a complaint' },
+    'login_name_label': { ta: 'உங்கள் பெயர் <span class="required">*</span>', en: 'Your Name <span class="required">*</span>' },
+    'login_mobile_label': { ta: 'தொலைபேசி எண் <span class="required">*</span>', en: 'Phone Number <span class="required">*</span>' },
+    'login_send_otp': { ta: '<i class="fas fa-paper-plane"></i> OTP அனுப்பு', en: '<i class="fas fa-paper-plane"></i> Send OTP' },
     'login_otp_label': { ta: 'SMS-ல் வந்த OTP உள்ளிடுங்கள்', en: 'Enter the OTP sent via SMS' },
-    'login_verify': { ta: '<i class="fas fa-lock-open"></i> Verify & Login', en: '<i class="fas fa-lock-open"></i> Verify & Login' },
+    'login_verify': { ta: '<i class="fas fa-lock-open"></i> சரிபார்த்து உள்நுழை', en: '<i class="fas fa-lock-open"></i> Verify & Login' },
     'login_footer': { ta: '© 2026 Citizen Connect | தமிழக வெற்றி கழகம்', en: '© 2026 Citizen Connect | Tamilaga Vettri Kazhagam' },
     'ph_login_name': { ta: 'உங்கள் முழு பெயர்', en: 'Your full name' },
     'ph_login_mobile': { ta: '98765 43210', en: '98765 43210' },
@@ -179,14 +179,14 @@ const TRANSLATIONS = {
     // ===== FOOTER =====
     'footer_brand': { ta: '🏛️ மக்கள் குறை தீர்வு மேடை', en: '🏛️ Citizen Connect' },
     'footer_desc': { ta: 'மக்கள் குறை தீர்வு மேடை - தஞ்சாவூர் தொகுதி', en: 'Citizen Grievance Platform - Thanjavur Constituency' },
-    'footer_sub': { ta: 'Tamilaga Vettri Kazhagam | MLA: R. Vijaysaravanan', en: 'Tamilaga Vettri Kazhagam | MLA: R. Vijaysaravanan' },
+    'footer_sub': { ta: 'தமிழக வெற்றி கழகம் | சட்டமன்ற உறுப்பினர்: ஆர். விஜய்சரவணன்', en: 'Tamilaga Vettri Kazhagam | MLA: R. Vijaysaravanan' },
     'footer_links_title': { ta: 'முக்கிய இணைப்புகள்', en: 'Quick Links' },
     'footer_contact_title': { ta: 'தொடர்பு', en: 'Contact' },
     'footer_link_home': { ta: 'முகப்பு', en: 'Home' },
     'footer_link_complaint': { ta: 'புகார் செய்', en: 'File Complaint' },
     'footer_link_track': { ta: 'நிலை காண', en: 'Track Status' },
     'footer_link_updates': { ta: 'அறிவிப்புகள்', en: 'Updates' },
-    'footer_copyright': { ta: '© 2026 Citizen Connect Thanjavur | R. Vijaysaravanan - MLA, Thanjavur Constituency  ', en: '© 2026 Citizen Connect Thanjavur | R. Vijaysaravanan - MLA, Thanjavur Constituency  ' },
+    'footer_copyright': { ta: '© 2026 மக்கள் இணைப்பு தஞ்சாவூர் | ஆர். விஜய்சரவணன் - சட்டமன்ற உறுப்பினர், தஞ்சாவூர் தொகுதி', en: '© 2026 Citizen Connect Thanjavur | R. Vijaysaravanan - MLA, Thanjavur Constituency' },
 
     // ===== RECENT COMPLAINTS =====
     'rc1_title': { ta: 'சாலையில் பள்ளம் - East Main Street', en: 'Pothole on Road - East Main Street' },
@@ -203,6 +203,9 @@ const TRANSLATIONS = {
     'status_progress': { ta: 'பணியில்', en: 'In Progress' },
     'status_assigned': { ta: 'ஒதுக்கப்பட்டது', en: 'Assigned' },
     'status_new': { ta: 'புதியது', en: 'New' },
+
+    // ===== THIRUKKURAL =====
+    'kural_section_title': { ta: 'இன்றைய திருக்குறள்', en: "Today's Thirukkural" },
 
     // ===== MISC =====
     'voice_listening': { ta: '🎤 கேட்கிறேன்... தமிழில் பேசுங்கள்', en: '🎤 Listening... Speak in Tamil' },

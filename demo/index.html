@@ -1907,7 +1907,8 @@ body::before {
 @media (max-width: 768px) {
     .nav-brand { max-width: 55vw; }
     .nav-brand .brand-text { font-size: 0.82rem; }
-    .nav-links { display: none !important; }
+    .nav-links { display: none; }
+    .nav-links.active { display: flex !important; }
     .hamburger { display: flex !important; }
     .nav-right { gap: 8px; }
     .btn-login { padding: 7px 10px !important; font-size: 0.7rem !important; }
@@ -2138,7 +2139,7 @@ body::before {
                     <div class="glass-card" style="padding:30px;text-align:center;border-left:4px solid var(--gold);">
                         <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;">
                             <span style="font-size:1.8rem;">📜</span>
-                            <h3 style="font-family:'Noto Serif Tamil',serif;font-size:1.1rem;color:var(--gold);" id="kuralSectionTitle">இன்றைய திருக்குறள்</h3>
+                            <h3 style="font-family:'Noto Serif Tamil',serif;font-size:1.1rem;color:var(--gold);" id="kuralSectionTitle" data-lang="kural_section_title">இன்றைய திருக்குறள்</h3>
                         </div>
                         <p id="kuralText" style="font-family:'Noto Serif Tamil',serif;font-size:1.05rem;color:var(--text-light);line-height:2;margin-bottom:12px;"></p>
                         <p id="kuralMeaning" style="font-size:0.82rem;color:var(--text-muted);line-height:1.7;margin-bottom:8px;"></p>
@@ -2437,8 +2438,8 @@ body::before {
                     </div>
                     <div class="citizen-dash-login" id="citizenLoginSection">
                         <div class="track-search">
-                            <input type="text" placeholder="உங்கள் Mobile Number அல்லது Complaint ID" id="citizenSearchInput">
-                            <button class="btn btn-primary" onclick="loadCitizenComplaints()"><i class="fas fa-search"></i> தேடு</button>
+                            <input type="text" placeholder="உங்கள் Mobile Number அல்லது Complaint ID" id="citizenSearchInput" data-lang="ph_citizen_search">
+                            <button class="btn btn-primary" onclick="loadCitizenComplaints()" data-lang="mycomp_search_btn"><i class="fas fa-search"></i> தேடு</button>
                         </div>
                         <p style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:12px;">Mobile Number enter செய்தால் உங்கள் அனைத்து புகார்களும் தெரியும்</p>
                     </div>
@@ -3095,30 +3096,47 @@ if (complaintForm) {
             let imageData = '';
             const previewImg = document.querySelector('#uploadPreview img');
             if (previewImg) imageData = previewImg.src;
-            // Collect voice audio (base64 from VoiceModule)
+            // Collect voice audio (base64 from VoiceModule) - only if user recorded in THIS submission
             let voiceAudioBase64 = '';
             const inlinePlayer = document.getElementById('inlineVoicePlayer');
             if (window.VoiceModule && window.VoiceModule.getAudioBase64) {
                 voiceAudioBase64 = window.VoiceModule.getAudioBase64();
             }
-            // Fallback: try localStorage if getAudioBase64 returned empty
-            if (!voiceAudioBase64 && inlinePlayer) {
+            // Only use localStorage fallback if the inline player is visible AND has a fresh recording
+            // (Do NOT blindly load old recordings from previous sessions)
+            if (!voiceAudioBase64 && inlinePlayer && inlinePlayer.src && inlinePlayer.src.startsWith('blob:')) {
                 try { voiceAudioBase64 = localStorage.getItem('vtm_voice_latest') || ''; } catch(e) {}
             }
+            // Note: Large voice/image data is handled by Firebase Storage upload in firebase-db.js
+            // No need to skip - all user data will be preserved
 
             const nc = {id:lastComplaintId,govId:govId,title:title+(areaNames[area]?' - '+areaNames[area]:''),description:desc||'',category:categoryNames[catVal]||catVal,area:areaNames[area]||area,citizenName:cn,mobileNumber:mn,assigned:'-',date:ds,status:'புதியது',statusClass:'badge-new',createdAt:now.toISOString(),location:gpsData,address:fullAddress,imageData:imageData,hasVoiceNote:!!inlinePlayer,voiceAudioData:voiceAudioBase64,timeline:[{text:'புகார் பதிவு செய்யப்பட்டது',time:`${ds} - ${ts}`,state:'completed'},{text:'ஆய்வு செய்யப்படுகிறது',time:'நிலுவையில்...',state:'active'},{text:'துறைக்கு ஒதுக்கப்படும்',time:'நிலுவையில்...',state:''},{text:'பணி தொடங்கப்படும்',time:'நிலுவையில்...',state:''},{text:'தீர்வு & உறுதிப்படுத்தல்',time:'நிலுவையில்...',state:''}]};
             complaintsDB[lastComplaintId] = nc;
-            const saved = window.VoiceToMinister_DB ? await VoiceToMinister_DB.saveComplaint(nc) : true;
+            if (window.VoiceToMinister_DB) {
+                await VoiceToMinister_DB.saveComplaint(nc);
+            }
             document.getElementById('generatedComplaintId').textContent = govId;
             sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false;
-            if (saved) {
-                document.getElementById('successModal').classList.add('active');
-                complaintForm.reset(); document.querySelectorAll('.cat-card-new').forEach(c=>c.classList.remove('selected'));
-                currentStep = 1; updateWizardUI();
+            // Clear voice localStorage after successful save
+            try { localStorage.removeItem('vtm_voice_latest'); } catch(e) {}
+            document.getElementById('successModal').classList.add('active');
+            complaintForm.reset(); document.querySelectorAll('.cat-card-new').forEach(c=>c.classList.remove('selected'));
+            if (document.getElementById('uploadPreview')) document.getElementById('uploadPreview').innerHTML = '';
+            currentStep = 1; updateWizardUI();
+        } catch (err) {
+            console.error('❌ Complaint save error:', err);
+            sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false;
+            // Show specific error messages based on failure type
+            if (err.message === 'STORAGE_AUTH_ERROR') {
+                showNotification('❌ படம்/குரல் பதிவேற்ற அனுமதி இல்லை! மீண்டும் Login செய்து முயற்சிக்கவும்.','error');
+            } else if (err.message === 'STORAGE_NETWORK_ERROR') {
+                showNotification('❌ இணைய இணைப்பு பிழை! உங்கள் இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.','error');
+            } else if (err.message === 'SIZE_LIMIT_ERROR') {
+                showNotification('❌ படம்/voice note மிகப் பெரியது! சிறிய கோப்பை தேர்வு செய்து மீண்டும் முயற்சிக்கவும்.','error');
             } else {
-                showNotification('புகார் சேமிக்க முடியவில்லை! இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும் (படம்/voice note அளவை குறைக்கவும்).','error');
+                showNotification('❌ புகார் சேமிக்க முடியவில்லை! இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.','error');
             }
-        } catch (err) { console.error(err); showNotification('பிழை!','error'); sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false; }
+        }
     });
 }
 

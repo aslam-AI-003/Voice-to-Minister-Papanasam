@@ -323,7 +323,7 @@ function closeSuccessModalEnhanced() { document.getElementById('successModal').c
 function searchComplaint() {
     const input = document.getElementById('trackInput');
     const result = document.getElementById('trackResult');
-    if (!input.value) { showNotification('Complaint ID enter செய்யுங்கள்!', 'error'); return; }
+    if (!input.value) { showNotification(currentLang === 'ta' ? 'புகார் எண் உள்ளிடுங்கள்!' : 'Please enter Complaint ID!', 'error'); return; }
     result.style.opacity = '0.5';
     setTimeout(() => {
         let searchVal = input.value.trim().toUpperCase();
@@ -342,14 +342,39 @@ function searchComplaint() {
         if (complaint) {
             const displayId = complaint.govId || `TVK/TNJ/2026/${complaint.id.split('-').pop()}`;
             input.value = displayId;
-            let timelineHTML = (complaint.timeline || []).map(item => `<div class="tl-item ${escapeHTML(item.state)}"><div class="tl-dot"></div><div class="tl-content"><h4>${escapeHTML(item.text)}</h4><p>${escapeHTML(item.time)}</p></div></div>`).join('');
-            result.innerHTML = `<div class="track-card"><div class="track-header"><div><h3>Complaint ${escapeHTML(displayId)}</h3><p>${escapeHTML(complaint.title)}</p></div><span class="status-badge ${escapeHTML(complaint.statusClass)}">${escapeHTML(complaint.status)}</span></div><div class="track-details"><div class="track-detail"><span class="label">வகை:</span><span class="value">${escapeHTML(complaint.category)}</span></div><div class="track-detail"><span class="label">பகுதி:</span><span class="value">${escapeHTML(complaint.area)}</span></div><div class="track-detail"><span class="label">ஒதுக்கப்பட்டவர்:</span><span class="value">${escapeHTML(complaint.assigned)}</span></div><div class="track-detail"><span class="label">பதிவு நாள்:</span><span class="value">${escapeHTML(complaint.date)}</span></div></div><div class="track-timeline">${timelineHTML}</div></div>`;
+            const lbl_complaint = currentLang === 'ta' ? 'புகார்' : 'Complaint';
+            const lbl_category = currentLang === 'ta' ? 'வகை:' : 'Category:';
+            const lbl_area = currentLang === 'ta' ? 'பகுதி:' : 'Area:';
+            const lbl_assigned = currentLang === 'ta' ? 'ஒதுக்கப்பட்டவர்:' : 'Assigned to:';
+            const lbl_date = currentLang === 'ta' ? 'பதிவு நாள்:' : 'Filed Date:';
+            const timelineTexts = {
+                'புகார் பதிவு செய்யப்பட்டது': currentLang === 'ta' ? 'புகார் பதிவு செய்யப்பட்டது' : 'Complaint Registered',
+                'புகார் பதிவு': currentLang === 'ta' ? 'புகார் பதிவு' : 'Complaint Filed',
+                'ஆய்வு செய்யப்படுகிறது': currentLang === 'ta' ? 'ஆய்வு செய்யப்படுகிறது' : 'Under Review',
+                'ஆய்வு': currentLang === 'ta' ? 'ஆய்வு' : 'Review',
+                'பணி தொடங்கப்படும்': currentLang === 'ta' ? 'பணி தொடங்கப்படும்' : 'Work Will Begin',
+                'பணி தொடங்கப்பட்டது': currentLang === 'ta' ? 'பணி தொடங்கப்பட்டது' : 'Work Started',
+                'பணி தொடங்கப்படும்': currentLang === 'ta' ? 'பணி தொடங்கப்படும்' : 'Work In Progress',
+                'துறைக்கு ஒதுக்கப்படும்': currentLang === 'ta' ? 'துறைக்கு ஒதுக்கப்படும்' : 'Will be Assigned to Dept',
+                'ஒதுக்கப்படும்': currentLang === 'ta' ? 'ஒதுக்கப்படும்' : 'Will be Assigned',
+                'தீர்வு & உறுதிப்படுத்தல்': currentLang === 'ta' ? 'தீர்வு & உறுதிப்படுத்தல்' : 'Resolution & Confirmation',
+                'தீர்வு ✓': currentLang === 'ta' ? 'தீர்வு ✓' : 'Resolved ✓',
+                'தீர்வு': currentLang === 'ta' ? 'தீர்வு' : 'Resolution',
+                'நிலுவையில்...': currentLang === 'ta' ? 'நிலுவையில்...' : 'Pending...'
+            };
+            let timelineHTML = (complaint.timeline || []).map(item => {
+                const translatedText = timelineTexts[item.text] || item.text;
+                return `<div class="tl-item ${escapeHTML(item.state)}"><div class="tl-dot"></div><div class="tl-content"><h4>${escapeHTML(translatedText)}</h4><p>${escapeHTML(item.time)}</p></div></div>`;
+            }).join('');
+            result.innerHTML = `<div class="track-card"><div class="track-header"><div><h3>${lbl_complaint} ${escapeHTML(displayId)}</h3><p>${escapeHTML(complaint.title)}</p></div><span class="status-badge ${escapeHTML(complaint.statusClass)}">${localizedStatus(complaint.statusClass, complaint.status)}</span></div><div class="track-details"><div class="track-detail"><span class="label">${lbl_category}</span><span class="value">${escapeHTML(complaint.category)}</span></div><div class="track-detail"><span class="label">${lbl_area}</span><span class="value">${escapeHTML(complaint.area)}</span></div><div class="track-detail"><span class="label">${lbl_assigned}</span><span class="value">${escapeHTML(complaint.assigned)}</span></div><div class="track-detail"><span class="label">${lbl_date}</span><span class="value">${escapeHTML(complaint.date)}</span></div></div><div class="track-timeline">${timelineHTML}</div></div>`;
             result.style.opacity = '1';
-            showNotification('புகார் விவரங்கள் கிடைத்தது!', 'success');
+            showNotification(currentLang === 'ta' ? 'புகார் விவரங்கள் கிடைத்தது!' : 'Complaint details found!', 'success');
         } else {
-            result.innerHTML = `<div class="track-card" style="text-align:center;padding:40px;"><i class="fas fa-search" style="font-size:2.5rem;color:var(--gray);margin-bottom:15px;"></i><h3 style="color:var(--gray);">புகார் கிடைக்கவில்லை</h3><p style="color:var(--gray);font-size:0.9rem;">ID "${escapeHTML(input.value)}" க்கான புகார் இல்லை.</p></div>`;
+            const notFoundTitle = currentLang === 'ta' ? 'புகார் கிடைக்கவில்லை' : 'Complaint not found';
+            const notFoundMsg = currentLang === 'ta' ? `ID "${escapeHTML(input.value)}" க்கான புகார் இல்லை.` : `No complaint found for ID "${escapeHTML(input.value)}".`;
+            result.innerHTML = `<div class="track-card" style="text-align:center;padding:40px;"><i class="fas fa-search" style="font-size:2.5rem;color:var(--gray);margin-bottom:15px;"></i><h3 style="color:var(--gray);">${notFoundTitle}</h3><p style="color:var(--gray);font-size:0.9rem;">${notFoundMsg}</p></div>`;
             result.style.opacity = '1';
-            showNotification('புகார் கிடைக்கவில்லை', 'error');
+            showNotification(notFoundTitle, 'error');
         }
     }, 1000);
 }
@@ -396,7 +421,7 @@ function confirmAssignment() {
 // ===== CITIZEN DASHBOARD =====
 function loadCitizenComplaints() {
     const input = document.getElementById('citizenSearchInput'), statsSection = document.getElementById('citizenStats'), listSection = document.getElementById('citizenComplaintsList');
-    if (!input || !input.value.trim()) { showNotification('Mobile Number உள்ளிடுங்கள்!', 'error'); return; }
+    if (!input || !input.value.trim()) { showNotification(currentLang === 'ta' ? 'தொலைபேசி எண் உள்ளிடுங்கள்!' : 'Please enter Mobile Number!', 'error'); return; }
     const searchVal = input.value.trim();
     let matched = Object.values(complaintsDB).filter(c => c.mobileNumber === searchVal);
     if (matched.length === 0) { const m = Object.keys(complaintsDB).find(k => k.includes(searchVal) || (complaintsDB[k].govId && complaintsDB[k].govId.includes(searchVal))); if (m) matched.push(complaintsDB[m]); }
@@ -405,9 +430,14 @@ function loadCitizenComplaints() {
         document.getElementById('citizenTotal').textContent = matched.length;
         document.getElementById('citizenPending').textContent = matched.filter(c => c.statusClass !== 'badge-resolved').length;
         document.getElementById('citizenResolved').textContent = matched.filter(c => c.statusClass === 'badge-resolved').length;
-        listSection.innerHTML = matched.map(c => `<div class="complaint-card" style="cursor:pointer;" onclick="navigateTo('track');document.getElementById('trackInput').value='${escapeHTML(c.id)}';setTimeout(searchComplaint,300);"><div class="complaint-status ${c.statusClass === 'badge-resolved' ? 'status-resolved' : c.statusClass === 'badge-progress' ? 'status-progress' : 'status-new'}"><i class="fas ${c.statusClass === 'badge-resolved' ? 'fa-check' : 'fa-clock'}"></i></div><div class="complaint-info"><h4>${escapeHTML(c.title)}</h4><p>${escapeHTML(c.area)} | ${escapeHTML(c.date)} | <strong>${escapeHTML(c.govId || c.id)}</strong></p></div><span class="status-badge ${escapeHTML(c.statusClass)}">${escapeHTML(c.status)}</span></div>`).join('');
-        showNotification(`${matched.length} புகார்கள் கிடைத்தது!`, 'success');
-    } else { statsSection.style.display = 'none'; listSection.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);"><p>புகார்கள் கிடைக்கவில்லை</p></div>'; }
+        listSection.innerHTML = matched.map(c => `<div class="complaint-card" style="cursor:pointer;" onclick="navigateTo('track');document.getElementById('trackInput').value='${escapeHTML(c.id)}';setTimeout(searchComplaint,300);"><div class="complaint-status ${c.statusClass === 'badge-resolved' ? 'status-resolved' : c.statusClass === 'badge-progress' ? 'status-progress' : 'status-new'}"><i class="fas ${c.statusClass === 'badge-resolved' ? 'fa-check' : 'fa-clock'}"></i></div><div class="complaint-info"><h4>${escapeHTML(c.title)}</h4><p>${escapeHTML(c.area)} | ${escapeHTML(c.date)} | <strong>${escapeHTML(c.govId || c.id)}</strong></p></div><span class="status-badge ${escapeHTML(c.statusClass)}">${localizedStatus(c.statusClass, c.status)}</span></div>`).join('');
+        const foundMsg = currentLang === 'ta' ? `${matched.length} புகார்கள் கிடைத்தது!` : `${matched.length} complaint(s) found!`;
+        showNotification(foundMsg, 'success');
+    } else {
+        statsSection.style.display = 'none';
+        const noResultMsg = currentLang === 'ta' ? 'புகார்கள் கிடைக்கவில்லை' : 'No complaints found';
+        listSection.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray);"><p>${noResultMsg}</p></div>`;
+    }
 }
 
 // ===== UPDATE POSTING =====
