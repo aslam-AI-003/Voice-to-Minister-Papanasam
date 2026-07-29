@@ -3164,21 +3164,24 @@ function searchComplaint() {
             const lbl_area = currentLang==='ta'?'பகுதி:':'Area:';
             const lbl_assigned = currentLang==='ta'?'ஒதுக்கப்பட்டவர்:':'Assigned to:';
             const lbl_date = currentLang==='ta'?'பதிவு நாள்:':'Filed Date:';
-            const timelineTexts = {
-                'புகார் பதிவு': currentLang==='en'?'Complaint Filed':'புகார் பதிவு செய்யப்பட்டது',
-                'புகார் பதிவு செய்யப்பட்டது': currentLang==='en'?'Complaint Filed':'புகார் பதிவு செய்யப்பட்டது',
-                'ஆய்வு': currentLang==='en'?'Under Review':'ஆய்வு செய்யப்படுகிறது',
-                'ஆய்வு செய்யப்படுகிறது': currentLang==='en'?'Under Review':'ஆய்வு செய்யப்படுகிறது',
-                'துறைக்கு ஒதுக்கப்படும்': currentLang==='en'?'Assigned to Department':'துறைக்கு ஒதுக்கப்படும்',
-                'பணி தொடங்கப்படும்': currentLang==='en'?'Work Started':'பணி தொடங்கப்படும்',
-                'பணி தொடங்கப்பட்டது': currentLang==='en'?'Work Started':'பணி தொடங்கப்பட்டது',
-                'தீர்வு & உறுதிப்படுத்தல்': currentLang==='en'?'Resolution & Confirmation':'தீர்வு & உறுதிப்படுத்தல்',
-                'தீர்வு ✓': currentLang==='en'?'Resolved ✓':'தீர்வு ✓'
-            };
             let tlHTML=(complaint.timeline||[]).map(item=>{
                 let text = item.text;
-                Object.keys(timelineTexts).forEach(k=>{ if(text.includes(k)) text=text.replace(k, timelineTexts[k]); });
-                return `<div class="tl-item ${escapeHTML(item.state)}"><div class="tl-dot"></div><div class="tl-content"><h4>${escapeHTML(text)}</h4><p>${escapeHTML(item.time)}</p></div></div>`;
+                if (currentLang === 'en') {
+                    // Translate full timeline text to English
+                    if (text.includes('புகார் பதிவு')) text = 'Complaint Filed';
+                    else if (text.includes('ஆய்வு')) text = 'Under Review';
+                    else if (text.includes('ஒதுக்கப்பட்டது') || text.includes('ஒதுக்கப்பட்டவர்')) {
+                        // Extract person name if present (e.g., "Mr. Murugan (Coordinator) ஒதுக்கப்பட்டது")
+                        const nameMatch = text.match(/^(.+?)\s*ஒதுக்கப்பட்ட/);
+                        text = nameMatch ? `Assigned to ${nameMatch[1]}` : 'Assigned to Department';
+                    }
+                    else if (text.includes('துறைக்கு ஒதுக்கப்படும்')) text = 'Assigned to Department';
+                    else if (text.includes('பணி தொடங்க')) text = 'Work Started';
+                    else if (text.includes('தீர்வு') && text.includes('உறுதி')) text = 'Resolution & Confirmation';
+                    else if (text.includes('தீர்வு')) text = 'Resolved ✓';
+                    else if (text.includes('Escalate')) text = text; // Keep English text as-is
+                }
+                return `<div class="tl-item ${escapeHTML(item.state)}"><div class="tl-dot"></div><div class="tl-content"><h4>${escapeHTML(text)}</h4><p>${escapeHTML(item.time === 'நிலுவையில்...' && currentLang==='en' ? 'Pending...' : item.time)}</p></div></div>`;
             }).join('');
             result.innerHTML=`<div class="track-card"><div class="track-header"><div><h3>${lbl_complaint} ${escapeHTML(did)}</h3><p>${escapeHTML(complaint.title)}</p></div><span class="status-badge ${escapeHTML(complaint.statusClass)}">${escapeHTML(localizedStatus(complaint.statusClass, complaint.status))}</span></div><div class="track-details"><div class="track-detail"><span class="label">${lbl_category}</span><span class="value">${escapeHTML(complaint.category)}</span></div><div class="track-detail"><span class="label">${lbl_area}</span><span class="value">${escapeHTML(complaint.area)}</span></div><div class="track-detail"><span class="label">${lbl_assigned}</span><span class="value">${escapeHTML(complaint.assigned)}</span></div><div class="track-detail"><span class="label">${lbl_date}</span><span class="value">${escapeHTML(complaint.date)}</span></div></div><div class="track-timeline">${tlHTML}</div></div>`;
             result.style.opacity='1'; showNotification(currentLang==='en'?'Complaint details found!':'புகார் விவரங்கள் கிடைத்தது!','success');
