@@ -3215,7 +3215,7 @@ function compressImageFile(file, maxDim = 1280, quality = 0.7) {
         reader.readAsDataURL(file);
     });
 }
-const MAX_IMAGE_BASE64_BYTES = 900000; // stay comfortably under Firestore's 1MB per-document cap
+const MAX_IMAGE_BASE64_BYTES = 33000000; // 25MB raw ≈ 33MB base64 - Firebase Storage handles large files
 const uploadArea=document.getElementById('uploadArea'),fileInput=document.getElementById('fileInput'),uploadPreview=document.getElementById('uploadPreview');
 if (uploadArea) { uploadArea.addEventListener('click',()=>fileInput.click()); fileInput.addEventListener('change',(e)=>{Array.from(e.target.files).forEach(f=>{if(f.type.startsWith('image/')){compressImageFile(f).then(dataUrl => {
     if (dataUrl.length > MAX_IMAGE_BASE64_BYTES) { showNotification('படம் மிகப் பெரியது! சிறிய படத்தை தேர்வு செய்யுங்கள்.','error'); return; }

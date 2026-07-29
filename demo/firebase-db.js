@@ -25,10 +25,10 @@ const VoiceToMinister_DB = {
     
     // Save a new complaint to Firestore (with timeout to prevent infinite hang)
     async saveComplaint(complaint) {
-        // Wrap entire save in a timeout (15s max) to prevent infinite spinning
+        // Wrap entire save in a timeout (60s max - allows large file uploads)
         const savePromise = this._doSaveComplaint(complaint);
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('TIMEOUT')), 15000)
+            setTimeout(() => reject(new Error('TIMEOUT')), 60000)
         );
         try {
             return await Promise.race([savePromise, timeoutPromise]);
@@ -41,16 +41,46 @@ const VoiceToMinister_DB = {
     async _doSaveComplaint(complaint) {
         try {
             const complaintData = { ...complaint };
+            const storageRef = firebase.storage().ref();
 
-            // Remove large binary data BEFORE saving to Firestore
-            // (Firebase Storage is not configured with proper rules, so skip Storage upload entirely)
-            // This prevents hangs from Storage permission denials
+            // Upload image to Firebase Storage if present (supports up to 25MB)
+            if (complaintData.imageData && complaintData.imageData.length > 100) {
+                try {
+                    const imgRef = storageRef.child(`complaints/${complaint.id}/photo`);
+                    await imgRef.putString(complaintData.imageData, 'data_url');
+                    complaintData.imageUrl = await imgRef.getDownloadURL();
+                    console.log('📷 Image uploaded to Storage:', complaintData.imageUrl);
+                } catch (err) {
+                    console.error('⚠️ Image upload failed:', err.message);
+                    // If storage fails, keep base64 only if small enough for Firestore
+                    if (complaintData.imageData.length > 900000) {
+                        complaintData.imageUploadFailed = true;
+                    }
+                }
+            }
+            
+            // Upload voice audio to Firebase Storage if present (supports up to 5MB)
+            if (complaintData.voiceAudioData && complaintData.voiceAudioData.length > 100) {
+                try {
+                    const audioRef = storageRef.child(`complaints/${complaint.id}/voice`);
+                    await audioRef.putString(complaintData.voiceAudioData, 'data_url');
+                    complaintData.voiceUrl = await audioRef.getDownloadURL();
+                    console.log('🎤 Voice uploaded to Storage:', complaintData.voiceUrl);
+                } catch (err) {
+                    console.error('⚠️ Voice upload failed:', err.message);
+                    if (complaintData.voiceAudioData.length > 900000) {
+                        complaintData.voiceUploadFailed = true;
+                    }
+                }
+            }
+
+            // Always remove base64 data from Firestore document (use URLs instead)
             delete complaintData.imageData;
             delete complaintData.voiceAudioData;
             
-            // Mark what attachments were present
-            complaintData.hasImage = !!(complaint.imageData && complaint.imageData.length > 100);
-            complaintData.hasVoiceNote = !!(complaint.voiceAudioData && complaint.voiceAudioData.length > 100);
+            // Mark what attachments are available
+            complaintData.hasImage = !!(complaintData.imageUrl);
+            complaintData.hasVoiceNote = !!(complaintData.voiceUrl);
 
             await db.collection('vtm_ppn_complaints').doc(complaint.id).set({
                 ...complaintData,

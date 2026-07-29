@@ -941,17 +941,17 @@
                             </button>
                             <div style="flex:1;">
                                 <p style="font-size:0.78rem;font-weight:600;color:#059669;margin:0;">🎤 Voice Note Attached</p>
-                                <p style="font-size:0.68rem;color:#6b7280;margin:2px 0 0;">${c.voiceAudioData ? 'Click ▶ to play' : 'Audio recorded by citizen'}</p>
-                                ${c.voiceAudioData ? `<audio id="adminAudio_${escapeHTML(id)}" src="${escapeHTML(safeDataUrl(c.voiceAudioData, 'audio'))}" preload="none"></audio>` : ''}
+                                <p style="font-size:0.68rem;color:#6b7280;margin:2px 0 0;">${(c.voiceAudioData || c.voiceUrl) ? 'Click ▶ to play' : 'Audio recorded by citizen'}</p>
+                                ${c.voiceUrl ? `<audio id="adminAudio_${escapeHTML(id)}" src="${escapeHTML(c.voiceUrl)}" preload="none"></audio>` : (c.voiceAudioData ? `<audio id="adminAudio_${escapeHTML(id)}" src="${escapeHTML(safeDataUrl(c.voiceAudioData, 'audio'))}" preload="none"></audio>` : '')}
                             </div>
                         </div>
                     </div>` : ''}
 
-                    ${c.imageData ? `
+                    ${(c.imageUrl || c.imageData) ? `
                     <div style="margin-top:12px;">
                         <p style="font-size:0.75rem;font-weight:600;color:#374151;margin-bottom:6px;">📷 Attached Photo:</p>
                         <div style="border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;max-width:250px;">
-                            <img src="${escapeHTML(safeDataUrl(c.imageData, 'image'))}" style="width:100%;height:auto;display:block;" alt="Complaint Photo">
+                            <img src="${escapeHTML(c.imageUrl || safeDataUrl(c.imageData, 'image'))}" style="width:100%;height:auto;display:block;" alt="Complaint Photo">
                         </div>
                     </div>` : ''}
 
