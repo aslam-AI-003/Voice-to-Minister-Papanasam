@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Connect Thanjavur - QR Code Poster</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:wght@400;600;700;800;900&family=Playfair+Display:wght@700;800;900&family=Bebas+Neue&family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Noto Serif Tamil', 'Inter', serif;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .poster {
+            width: 210mm;
+            min-height: 297mm;
+            background: #FFFFFF;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* === TOP SECTION - Leaders Banner === */
+        .leaders-banner {
+            width: 100%;
+            text-align: center;
+            padding: 8px 0 0;
+            background: linear-gradient(180deg, #fff8f0 0%, #ffffff 100%);
+        }
+
+        .leaders-banner img {
+            width: 85%;
+            max-width: 600px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* === HEADER SECTION === */
+        .header-section {
+            background: linear-gradient(135deg, #8B0000 0%, #C41E3A 50%, #8B0000 100%);
+            padding: 18px 20px;
+            text-align: center;
+            position: relative;
+            border-top: 4px solid #D4AF37;
+            border-bottom: 4px solid #D4AF37;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(212,175,55,0.03) 10px,
+                rgba(212,175,55,0.03) 20px
+            );
+        }
+
+        .header-title {
+            font-family: 'Noto Serif Tamil', serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .header-subtitle {
+            font-family: 'Noto Serif Tamil', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #F5D76E;
+            margin-top: 6px;
+            position: relative;
+        }
+
+        .header-english {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.9);
+            margin-top: 4px;
+            letter-spacing: 2px;
+            position: relative;
+        }
+
+        /* === MAIN CONTENT === */
+        .main-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px 20px;
+            gap: 25px;
+            position: relative;
+        }
+
+        /* CM Photo - Left */
+        .leader-card {
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .leader-photo {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #D4AF37;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2), 0 0 0 3px #8B0000;
+            margin: 0 auto 8px;
+        }
+
+        .leader-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .leader-name {
+            font-family: 'Noto Serif Tamil', serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #8B0000;
+        }
+
+        .leader-title {
+            font-size: 0.65rem;
+            color: #555;
+            font-weight: 600;
+        }
+
+        /* QR Code Center */
+        .qr-section {
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .qr-frame {
+            width: 220px;
+            height: 220px;
+            padding: 12px;
+            background: #FFFFFF;
+            border: 5px solid #8B0000;
+            border-radius: 16px;
+            box-shadow: 0 0 0 4px #D4AF37, 0 10px 40px rgba(139,0,0,0.2);
+            position: relative;
+        }
+
+        .qr-frame img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* TVK Logo in QR center */
+        .qr-center-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 45px;
+            height: 45px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .qr-center-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .scan-text {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #8B0000;
+        }
+
+        .scan-arrow {
+            font-size: 1.5rem;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* === PROJECT INFO === */
+        .project-section {
+            text-align: center;
+            padding: 15px 20px;
+            background: linear-gradient(180deg, #fff 0%, #f8f4e8 100%);
+        }
+
+        .project-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #8B0000;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .project-name-tamil {
+            font-family: 'Noto Serif Tamil', serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .project-desc {
+            font-size: 0.82rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .url-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #8B0000, #C41E3A);
+            color: #fff;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(139,0,0,0.3);
+        }
+
+        /* === FEATURES STRIP === */
+        .features-strip {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 14px 20px;
+            background: #1a1a2e;
+        }
+
+        .feature-item {
+            text-align: center;
+            color: #fff;
+        }
+
+        .feature-icon {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+
+        .feature-text {
+            font-size: 0.62rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        /* === FOOTER === */
+        .footer-section {
+            background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            padding: 12px 20px;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .footer-sub {
+            font-size: 0.62rem;
+            color: rgba(26,26,46,0.7);
+            margin-top: 3px;
+        }
+
+        /* === TVK Flag decoration === */
+        .flag-decoration {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            width: 40px;
+            opacity: 0.9;
+        }
+
+        /* Print Styles */
+        @media print {
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0;
+            }
+            .poster { 
+                box-shadow: none; 
+                width: 100%; 
+                min-height: 100vh;
+            }
+            .no-print { display: none; }
+        }
+
+        /* Print Button */
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #8B0000, #C41E3A);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(139,0,0,0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(139,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <!-- Leaders Banner (Top) -->
+        <div class="leaders-banner">
+            <img src="assets/leaders.png" alt="TVK Leaders">
+        </div>
+
+        <!-- Header -->
+        <div class="header-section">
+            <div class="header-title">தமிழக வெற்றிக் கழகம்</div>
+            <div class="header-subtitle">தஞ்சாவூர் சட்டமன்ற தொகுதி</div>
+            <div class="header-english">TAMILAGA VETTRI KAZHAGAM | THANJAVUR CONSTITUENCY</div>
+        </div>
+
+        <!-- Main Content: CM + QR + MLA -->
+        <div class="main-content">
+            <!-- CM Vijay - Left -->
+            <div class="leader-card">
+                <div class="leader-photo">
+                    <img src="assets/tvk-vijay-it-wing-tamilaga-vettri-kazhagam.jpg.jpg" alt="CM C. Joseph Vijay">
+                </div>
+                <div class="leader-name">C. Joseph Vijay</div>
+                <div class="leader-title">முதலமைச்சர்<br>தமிழ்நாடு</div>
+            </div>
+
+            <!-- QR Code Center -->
+            <div class="qr-section">
+                <div class="scan-arrow">👇</div>
+                <div class="scan-text">📱 SCAN HERE</div>
+                <div class="qr-frame">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://voice-to-mla-thanjavur.vercel.app&format=png&margin=5" alt="QR Code - Citizen Connect Thanjavur">
+                    <div class="qr-center-logo">
+                        <img src="assets/TVKflag3d.png" alt="TVK">
+                    </div>
+                </div>
+                <div class="scan-text" style="margin-top:8px;font-size:0.72rem;color:#555;">புகார் பதிவு செய்ய QR Scan செய்யுங்கள்</div>
+            </div>
+
+            <!-- MLA - Right -->
+            <div class="leader-card">
+                <div class="leader-photo">
+                    <img src="assets/R.vijaysaravanan.png" alt="MLA R.Vijaysaravanan">
+                </div>
+                <div class="leader-name">R. Vijaysaravanan</div>
+                <div class="leader-title">சட்டமன்ற உறுப்பினர்<br>தஞ்சாவூர் தொகுதி</div>
+            </div>
+        </div>
+
+        <!-- Project Name -->
+        <div class="project-section">
+            <div class="project-name">🏛️ CITIZEN CONNECT THANJAVUR</div>
+            <div class="project-name-tamil">மக்கள் குறை தீர்வு மேடை</div>
+            <div class="project-desc">
+                உங்கள் பகுதி பிரச்சனைகளை நேரடியாக MLA அலுவலகத்திற்கு தெரிவிக்கவும்<br>
+                File complaints directly to MLA office • Track status • Get resolution
+            </div>
+            <div class="url-badge">🌐 voice-to-mla-thanjavur.vercel.app</div>
+        </div>
+
+        <!-- Features Strip -->
+        <div class="features-strip">
+            <div class="feature-item">
+                <div class="feature-icon">📱</div>
+                <div class="feature-text">புகார் பதிவு<br>File Complaint</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎤</div>
+                <div class="feature-text">தமிழில் பேசு<br>Voice Input</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📍</div>
+                <div class="feature-text">GPS Location<br>இடம் குறிப்பிடு</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-text">நிலை காண<br>Track Status</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📊</div>
+                <div class="feature-text">Dashboard<br>நிலை அறிக்கை</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-section">
+            <div class="footer-text">✅ 100% Free | No App Download Required | Works on Any Mobile Browser</div>
+            <div class="footer-sub">Developed by Asventechnology | © 2026 Citizen Connect Thanjavur | Tamilaga Vettri Kazhagam</div>
+        </div>
+    </div>
+
+    <!-- Print Button -->
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Print Poster</button>
+</body>
+</html>
