@@ -2687,8 +2687,6 @@ body::before {
     <!-- Enhanced Location Module -->
     <script src="location-module.js"></script>
     <script src="escape-html.js"></script>
-    <!-- Main Application Logic (includes searchComplaint, loadCitizenComplaints with localization) -->
-    <script src="script.js"></script>
 
     <script>
 // ===== PARTICLES CANVAS =====
@@ -3149,8 +3147,62 @@ if (complaintForm) {
 function trackNewComplaint() { document.getElementById('successModal').classList.remove('active'); navigateTo('track'); const ti=document.getElementById('trackInput'); if(ti){ti.value=lastComplaintId;searchComplaint();} }
 function closeSuccessModalEnhanced() { document.getElementById('successModal').classList.remove('active'); navigateTo('home'); }
 
-// ===== TRACK & CITIZEN DASHBOARD =====
-// searchComplaint() and loadCitizenComplaints() are defined in script.js with proper localization
+// ===== TRACK =====
+function searchComplaint() {
+    const input=document.getElementById('trackInput'),result=document.getElementById('trackResult');
+    if (!input.value) { showNotification(currentLang==='en'?'Enter complaint ID!':'ID enter செய்யுங்கள்!','error'); return; }
+    result.style.opacity = '0.5';
+    setTimeout(() => {
+        let sv = input.value.trim().toUpperCase(), complaint = null;
+        if (sv.includes('/')) { const m=Object.keys(complaintsDB).find(k=>complaintsDB[k].govId&&complaintsDB[k].govId.toUpperCase()===sv); if(m)complaint=complaintsDB[m]; }
+        if (!complaint) { if(!sv.startsWith('TVK'))sv='TVK-2026-'+sv.replace('#','').replace('TVK-2026-',''); complaint=complaintsDB[sv]; }
+        if (!complaint) { const m=Object.keys(complaintsDB).find(k=>k.includes(sv)||sv.includes(k.split('-').pop())); if(m)complaint=complaintsDB[m]; }
+        if (complaint) {
+            const did=complaint.govId||`TVK/TNJ/2026/${complaint.id.split('-').pop()}`; input.value=did;
+            const lbl_complaint = currentLang==='ta'?'புகார்':'Complaint';
+            const lbl_category = currentLang==='ta'?'வகை:':'Category:';
+            const lbl_area = currentLang==='ta'?'பகுதி:':'Area:';
+            const lbl_assigned = currentLang==='ta'?'ஒதுக்கப்பட்டவர்:':'Assigned to:';
+            const lbl_date = currentLang==='ta'?'பதிவு நாள்:':'Filed Date:';
+            const timelineTexts = {
+                'புகார் பதிவு': currentLang==='en'?'Complaint Filed':'புகார் பதிவு செய்யப்பட்டது',
+                'புகார் பதிவு செய்யப்பட்டது': currentLang==='en'?'Complaint Filed':'புகார் பதிவு செய்யப்பட்டது',
+                'ஆய்வு': currentLang==='en'?'Under Review':'ஆய்வு செய்யப்படுகிறது',
+                'ஆய்வு செய்யப்படுகிறது': currentLang==='en'?'Under Review':'ஆய்வு செய்யப்படுகிறது',
+                'துறைக்கு ஒதுக்கப்படும்': currentLang==='en'?'Assigned to Department':'துறைக்கு ஒதுக்கப்படும்',
+                'பணி தொடங்கப்படும்': currentLang==='en'?'Work Started':'பணி தொடங்கப்படும்',
+                'பணி தொடங்கப்பட்டது': currentLang==='en'?'Work Started':'பணி தொடங்கப்பட்டது',
+                'தீர்வு & உறுதிப்படுத்தல்': currentLang==='en'?'Resolution & Confirmation':'தீர்வு & உறுதிப்படுத்தல்',
+                'தீர்வு ✓': currentLang==='en'?'Resolved ✓':'தீர்வு ✓'
+            };
+            let tlHTML=(complaint.timeline||[]).map(item=>{
+                let text = item.text;
+                Object.keys(timelineTexts).forEach(k=>{ if(text.includes(k)) text=text.replace(k, timelineTexts[k]); });
+                return `<div class="tl-item ${escapeHTML(item.state)}"><div class="tl-dot"></div><div class="tl-content"><h4>${escapeHTML(text)}</h4><p>${escapeHTML(item.time)}</p></div></div>`;
+            }).join('');
+            result.innerHTML=`<div class="track-card"><div class="track-header"><div><h3>${lbl_complaint} ${escapeHTML(did)}</h3><p>${escapeHTML(complaint.title)}</p></div><span class="status-badge ${escapeHTML(complaint.statusClass)}">${escapeHTML(localizedStatus(complaint.statusClass, complaint.status))}</span></div><div class="track-details"><div class="track-detail"><span class="label">${lbl_category}</span><span class="value">${escapeHTML(complaint.category)}</span></div><div class="track-detail"><span class="label">${lbl_area}</span><span class="value">${escapeHTML(complaint.area)}</span></div><div class="track-detail"><span class="label">${lbl_assigned}</span><span class="value">${escapeHTML(complaint.assigned)}</span></div><div class="track-detail"><span class="label">${lbl_date}</span><span class="value">${escapeHTML(complaint.date)}</span></div></div><div class="track-timeline">${tlHTML}</div></div>`;
+            result.style.opacity='1'; showNotification(currentLang==='en'?'Complaint details found!':'புகார் விவரங்கள் கிடைத்தது!','success');
+        } else { result.innerHTML=`<div class="track-card" style="text-align:center;padding:40px;"><i class="fas fa-search" style="font-size:2.5rem;color:var(--text-muted);margin-bottom:15px;display:block;"></i><h3 style="color:var(--text-muted);">${currentLang==='en'?'Complaint not found':'புகார் கிடைக்கவில்லை'}</h3></div>`; result.style.opacity='1'; showNotification(currentLang==='en'?'Not found':'கிடைக்கவில்லை','error'); }
+    }, 800);
+}
+
+// ===== CITIZEN DASHBOARD =====
+function loadCitizenComplaints() {
+    const input=document.getElementById('citizenSearchInput'),stats=document.getElementById('citizenStats'),list=document.getElementById('citizenComplaintsList');
+    if (!input||!input.value.trim()) { showNotification(currentLang==='en'?'Enter Mobile Number!':'Mobile Number உள்ளிடுங்கள்!','error'); return; }
+    const sv=input.value.trim();
+    let matched=Object.values(complaintsDB).filter(c=>c.mobileNumber===sv);
+    if (matched.length===0) { const m=Object.keys(complaintsDB).find(k=>k.includes(sv)||(complaintsDB[k].govId&&complaintsDB[k].govId.includes(sv))); if(m)matched.push(complaintsDB[m]); }
+    if (matched.length>0) {
+        stats.style.display='block';
+        document.getElementById('citizenTotal').textContent=matched.length;
+        document.getElementById('citizenPending').textContent=matched.filter(c=>c.statusClass!=='badge-resolved').length;
+        document.getElementById('citizenResolved').textContent=matched.filter(c=>c.statusClass==='badge-resolved').length;
+        list.innerHTML=matched.map(c=>`<div class="complaint-card" style="cursor:pointer;" onclick="navigateTo('track');document.getElementById('trackInput').value='${escapeHTML(c.id)}';setTimeout(searchComplaint,300);"><div class="complaint-status ${c.statusClass==='badge-resolved'?'status-resolved':c.statusClass==='badge-progress'?'status-progress':'status-new'}"><i class="fas ${c.statusClass==='badge-resolved'?'fa-check':'fa-clock'}"></i></div><div class="complaint-info"><h4>${escapeHTML(c.title)}</h4><p>${escapeHTML(c.area)} | ${escapeHTML(c.date)} | <strong>${escapeHTML(c.govId||c.id)}</strong></p></div><span class="status-badge ${escapeHTML(c.statusClass)}">${escapeHTML(localizedStatus(c.statusClass, c.status))}</span></div>`).join('');
+        const msg = currentLang==='en'?`${matched.length} complaint(s) found!`:`${matched.length} புகார்கள் கிடைத்தது!`;
+        showNotification(msg,'success');
+    } else { stats.style.display='none'; list.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);"><p>${currentLang==='en'?'No complaints found':'புகார்கள் கிடைக்கவில்லை'}</p></div>`; }
+}
 
 // ===== WARD VOLUNTEERS =====
 const wardVolunteers = { 'Thanjavur Fort Area':[{name:'Mr. Senthil',phone:'98765xxxxx',ward:'Fort Area',role:'Coordinator'}], 'Gandhi Nagar':[{name:'Mr. Murugan',phone:'98762xxxxx',ward:'Gandhi Nagar',role:'Coordinator'}], 'New Bus Stand Area':[{name:'Mr. Rajesh',phone:'98763xxxxx',ward:'Bus Stand',role:'Coordinator'}], 'Punnainallur':[{name:'Mr. Selvam',phone:'98764xxxxx',ward:'Punnainallur',role:'Coordinator'}] };
