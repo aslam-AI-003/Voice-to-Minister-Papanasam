@@ -3074,6 +3074,17 @@ if (complaintForm) {
         const mn = document.getElementById('mobileNumber')?document.getElementById('mobileNumber').value.trim():'';
         const sb = complaintForm.querySelector('.btn-submit');
         sb.innerHTML = '<i class="fas fa-spinner fa-spin"></i> சமர்ப்பிக்கிறது...'; sb.disabled = true;
+        
+        // Check Firebase Auth state before saving - Firestore rules require isSignedIn()
+        if (firebase && firebase.auth && !firebase.auth().currentUser) {
+            console.warn('⚠️ Firebase Auth session not active, re-prompting login...');
+            sb.innerHTML = '<i class="fas fa-paper-plane"></i> புகார் சமர்ப்பி'; sb.disabled = false;
+            showNotification('⚠️ Session expired! மீண்டும் Login செய்யுங்கள்.', 'error');
+            loginModal.classList.add('active');
+            pendingNavAfterLogin = 'complaint';
+            return;
+        }
+        
         try {
             let nextNum = complaintCounter;
             if (window.VoiceToMinister_DB) nextNum = await VoiceToMinister_DB.getNextComplaintNumber();

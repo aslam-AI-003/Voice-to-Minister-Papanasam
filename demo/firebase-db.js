@@ -13,6 +13,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Persist auth state across page refreshes (LOCAL = survives browser close)
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => console.log('🔐 Firebase Auth persistence: LOCAL'))
+    .catch(err => console.warn('Auth persistence error:', err));
+
 // ===== VOICE TO MINISTER PAPANASAM - FIRESTORE OPERATIONS =====
 const VoiceToMinister_DB = {
 
